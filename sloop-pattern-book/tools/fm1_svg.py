@@ -13,6 +13,12 @@ BLACKS = [('F#3', 0, 'OP1'), ('G#3', 1, 'OP2'), ('A#3', 2, 'OP3'), ('C#4', 4, 'O
           ('F#4', 7, 'OP6'), ('G#4', 8, 'PIT'), ('A#4', 9, 'GLO'), ('C#5', 11, 'MONO'), ('D#5', 12, 'POLY'),
           ('F#5', 14, '')]
 SYL = {'C': 'до', 'D': 'ре', 'E': 'ми', 'F': 'фа', 'G': 'соль', 'A': 'ля', 'B': 'си'}
+
+
+def letter_syl(k):
+    """'E4' -> 'E/ми', 'F#4' -> 'F#/фа♯': the letter first, the syllable after it."""
+    sharp = '#' in k
+    return '%s%s/%s%s' % (k[0], '#' if sharp else '', SYL[k[0]], '♯' if sharp else '')
 BASE = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
 LETTERS = 'CDEFGAB'
 SCALES = {
@@ -300,6 +306,7 @@ def staff(notes, per_line=2, first_index=0):
         if si == 0:
             p.append('<text class="ts" x="22" y="%d">4</text><text class="ts" x="22" y="%d">4</text>' % (top + LS * 2 - 3, top + LS * 4 - 3))
         x = 46
+        row_end, rows_used = [-99, -99], 1        # letter/syllable labels: a second row where they would touch
         for bar in sysb:
             for idx, k, b in bar:
                 adv = max(unit * b, 24)
@@ -341,14 +348,22 @@ def staff(notes, per_line=2, first_index=0):
                 p.append('</g>')
                 if key_no(k):
                     p.append('<text class="kn" data-i="%d" x="%d" y="%d">%d</text>' % (idx, hx, nums, key_no(k)))
-                p.append('<text class="sy" x="%d" y="%d">%s</text>' % (hx, nums + 16, SYL[k[0]]))
+                lab = letter_syl(k)
+                half = 3.3 * len(lab)                       # 11px text: about 6.6px a character
+                row = 0 if hx - half >= row_end[0] + 3 else (1 if hx - half >= row_end[1] + 3 else 0)
+                row_end[row] = hx + half
+                rows_used = max(rows_used, row + 1)
+                p.append('<text class="sy" x="%d" y="%d">%s</text>' % (hx, nums + 16 + 13 * row, lab))
                 x += adv
             x += 4
             p.append('<line class="bar" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (x, top, x, bottom))
             x += 10
         p.append('<text class="lg" x="4" y="%d">клавиша</text>' % nums)
         p.append('</svg>')
-        out.append(''.join(p))
+        svg = ''.join(p)
+        if rows_used > 1:
+            svg = svg.replace('viewBox="0 0 %d %d"' % (width, H), 'viewBox="0 0 %d %d"' % (width, H + 13), 1)
+        out.append(svg)
     return '<div class="staff-wrap">%s</div>' % ''.join(out)
 
 
@@ -359,7 +374,7 @@ def chips(notes, scale='MAJ'):
         if k is None:
             bar.append('<span class="chip rest" data-i="%d" style="--w:%s">пауза</span>' % (i, b))
         else:
-            sub = SYL[k[0]] if scale == 'MAJ' else k
+            sub = letter_syl(k) if scale == 'MAJ' else k
             bar.append('<span class="chip" data-i="%d" style="--w:%s"><b>%s</b><i>%s</i></span>' % (
                 i, b, key_no(k) or esc(black_label(k) or k), esc(sub)))
         acc += b

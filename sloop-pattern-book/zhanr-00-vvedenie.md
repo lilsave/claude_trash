@@ -65,7 +65,7 @@ caption=Страница STEP: KNOB 3 — TIE (держать ноту), KNOB 4 
 ```
 
 ```song
-title=Как звучит слайд: до → до октавой выше → назад
+title=Как звучит слайд: C/до → C/до октавой выше → назад
 bpm=140
 scale=MIN
 voice=bass
