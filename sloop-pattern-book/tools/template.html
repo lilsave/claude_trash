@@ -159,6 +159,10 @@ table.drum td.c.v-r { background: repeating-linear-gradient(90deg, var(--accent)
 table.drum td.c.v-t { background: color-mix(in srgb, var(--t1) 35%, var(--cell)); }
 table.drum td.c.v-F { background: color-mix(in srgb, var(--t2) 45%, var(--cell)); }
 table.drum td.c.v-N { background: color-mix(in srgb, #d23c3c 40%, var(--cell)); }
+table.drum.mini td.c { width: 15px; min-width: 15px; height: 17px; border-radius: 3px; font-size: 9px; }
+table.drum.mini th.lab { min-width: 0; font-size: 11px; padding-right: 6px; }
+table.drum.mini th.lab .ln { min-width: 16px; font-size: 10px; }
+table.drum.mini { border-spacing: 1.5px; }
 table.drum td.com { padding-left: 10px; color: var(--muted); white-space: nowrap; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
 table.mel td.m { min-width: 30px; height: 28px; border-radius: 5px; background: var(--cell); text-align: center; font-weight: 700; padding: 0 2px; }
 table.mel td.note { background: color-mix(in srgb, var(--t1) 55%, var(--cell)); color: var(--fg); }
@@ -554,6 +558,31 @@ document.addEventListener('click', e => {
 });
 
 /* ---------- course player: melodies, chords, loops ---------- */
+let shaper = null;
+function sub808(t, midi, dur, vol, slideTo, slideAt) {
+  if (!shaper) {
+    shaper = ac.createWaveShaper();
+    const c = new Float32Array(1024);
+    for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(2.2 * x); }
+    shaper.curve = c; shaper.connect(out);
+  }
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+  g.gain.setTargetAtTime(vol * 0.55, t + 0.05, 0.25);
+  g.gain.setValueAtTime(vol * 0.5, t + Math.max(0.06, dur - 0.05));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.08);
+  g.connect(shaper);
+  const o = ac.createOscillator(); o.type = 'sine';
+  const f = mtof(midi);
+  o.frequency.setValueAtTime(f * 2.2, t);
+  o.frequency.exponentialRampToValueAtTime(f, t + 0.035);
+  if (slideTo != null) {
+    o.frequency.setValueAtTime(f, slideAt - 0.09);
+    o.frequency.exponentialRampToValueAtTime(mtof(slideTo), slideAt);
+  }
+  o.connect(g); o.start(t); o.stop(t + dur + 0.12);
+}
 function padNote(t, midi, dur, vol) {
   const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1700; f.Q.value = 0.5;
   const g = ac.createGain();
@@ -581,7 +610,7 @@ function lightTick(now) {
 function lightClear() { lit.forEach(l => l.els.forEach(x => x.classList.remove('lit'))); lit = []; }
 function startEv(btn, p, fig) {
   const sb = 60 / p.bpm;
-  const evs = p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5] }))
+  const evs = p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5], s: e[6] }))
     .concat(p.dr.map(d => ({ t: d[0], lane: d[1], vol: d[2], v: 'drums' })))
     .sort((a, b) => a.t - b.t);
   const me = { p, fig, btn, queue: [], base: ac.currentTime + 0.08, idx: 0 };
@@ -599,6 +628,8 @@ function startEv(btn, p, fig) {
           const dur = e.d * sb;
           ms.forEach(m => {
             if (e.v === 'pad') padNote(t, m, dur * 0.97, 0.09);
+            else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.5, e.s, t + dur);
+            else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
             else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
           });
           me.queue.push({ t, e, until: t + dur * 0.92 });

@@ -69,6 +69,9 @@ def chord_keys(root, scale='MAJ', kind='TRIAD'):
     return out
 
 
+FLAT_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+
+
 def midi_name(m):
     return '%s%d' % (NOTE_NAMES[m % 12], m // 12 - 1)
 
@@ -221,33 +224,47 @@ def panel(hl=None, caption=None, screen=None):
             p.append('<g class="%s"><rect x="%d" y="%d" width="%d" height="%d" rx="9"/>'
                      '<text class="bl%s" x="%d" y="%d">%s</text></g>' % (cls, cx - w // 2, cy - h // 2, w, h, fs, cx, cy + 4,
                                                                          esc('PLAY' if name == 'PLAY' else lab)))
-        if on and hl[name]:
-            bx, by = (cx + 16, cy - 18) if kind == 'knob' else (cx + 16, cy - 20)
+    for name, (kind, cx, cy, lab) in PANEL.items():   # badges last: nothing may cover them
+        if name in hl and hl[name]:
             lab = str(hl[name])
-            p.append(pill(bx + max(0, (8 * len(lab) + 10 - 24) // 2), by, lab))
+            half = max(24, 8 * len(lab) + 10) // 2
+            if kind == 'knob':
+                bx, by = cx, cy + 32
+            else:
+                bx, by = cx + max(10, half - 14), cy - 22
+            bx = min(bx, W - half - 2)
+            p.append(pill(bx, by, lab))
     p.append('</svg>')
     return '<figure class="pic">%s%s</figure>' % (''.join(p), '<figcaption>%s</figcaption>' % caption if caption else '')
 
 
 # ---------------------------------------------------------------- notes / staff
-def parse_notes(text):
-    """'E4 E4 F4 G4 | G4- E4. D4/ r' -> [(key or None, beats)], bar lines ignored.
+def parse_notes_ex(text):
+    """'E4 E4 F4 G4 | G4- E4. D4/ C4*3 G3*4~ r' -> [(key or None, beats, slide)], bar lines ignored.
 
-    '-' adds a beat, '/' halves, '.' adds half (dotted), 'r' is a rest."""
+    '-' adds a beat, '/' halves, '.' adds half (dotted), '*N' is N sixteenth steps,
+    '~' slides into the next note (the 808 glide), 'r' is a rest."""
     out = []
     for tok in text.split():
         if tok == '|':
             continue
-        m = re.fullmatch(r'([A-G]#?\d|r)(-*)(/?)(\.?)', tok)
+        m = re.fullmatch(r'([A-G]#?\d|r)(?:\*(\d+))?(-*)(/?)(\.?)(~?)', tok)
         if not m:
             raise ValueError('bad note token %r' % tok)
-        beats = 1 + len(m.group(2))
-        if m.group(3):
-            beats = 0.5
-        if m.group(4):
-            beats *= 1.5
-        out.append((None if m.group(1) == 'r' else m.group(1), beats))
+        if m.group(2):
+            beats = int(m.group(2)) / 4
+        else:
+            beats = 1 + len(m.group(3))
+            if m.group(4):
+                beats = 0.5
+            if m.group(5):
+                beats *= 1.5
+        out.append((None if m.group(1) == 'r' else m.group(1), beats, bool(m.group(6))))
     return out
+
+
+def parse_notes(text):
+    return [(k, b) for k, b, _ in parse_notes_ex(text)]
 
 
 def staff(notes, per_line=2, first_index=0):
@@ -270,7 +287,12 @@ def staff(notes, per_line=2, first_index=0):
         width = 46 + sum(sum(max(unit * b, 24) for _, _, b in bar) + 14 for bar in sysb) + 6
         top = 34
         bottom = top + 4 * LS        # E4 line
-        H = bottom + 78
+        steps_here = [LETTERS.index(k[0]) + 7 * (int(k[-1]) - 4) for bar in sysb for _, k, _ in bar if k]
+        low = min(steps_here + [2])
+        # a low note (and its stem going down) must not reach the key numbers
+        drop = max(0, int((2 - low) * LS / 2) + (36 if low >= 6 else 0) - 14) if low < 2 else 0
+        nums = bottom + 40 + drop
+        H = nums + 38
         p = ['<svg class="staff" viewBox="0 0 %d %d" role="img" aria-label="Ноты">' % (width, H)]
         for li in range(5):
             y = top + li * LS
@@ -304,23 +326,27 @@ def staff(notes, per_line=2, first_index=0):
                 if b < 4:
                     if step < 6:
                         p.append('<line class="stem" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (hx + 6.3, y - 2, hx + 6.3, y - 36))
-                        if b == 0.5 or b == 0.75:
+                        if b in (0.25, 0.5, 0.75):
                             p.append('<path class="flag" d="M%.1f %.1f q 10 8 8 20"/>' % (hx + 6.3, y - 36))
+                        if b == 0.25:
+                            p.append('<path class="flag" d="M%.1f %.1f q 10 8 8 20"/>' % (hx + 6.3, y - 28))
                     else:
                         p.append('<line class="stem" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (hx - 6.3, y + 2, hx - 6.3, y + 36))
-                        if b == 0.5 or b == 0.75:
+                        if b in (0.25, 0.5, 0.75):
                             p.append('<path class="flag" d="M%.1f %.1f q 10 -8 8 -20"/>' % (hx - 6.3, y + 36))
+                        if b == 0.25:
+                            p.append('<path class="flag" d="M%.1f %.1f q 10 -8 8 -20"/>' % (hx - 6.3, y + 28))
                 if b in (1.5, 3, 0.75):
                     p.append('<circle class="dot" cx="%d" cy="%.1f" r="2.2"/>' % (hx + 12, y - (3 if step % 2 == 0 else 0)))
                 p.append('</g>')
                 if key_no(k):
-                    p.append('<text class="kn" data-i="%d" x="%d" y="%d">%d</text>' % (idx, hx, bottom + 40, key_no(k)))
-                p.append('<text class="sy" x="%d" y="%d">%s</text>' % (hx, bottom + 56, SYL[k[0]]))
+                    p.append('<text class="kn" data-i="%d" x="%d" y="%d">%d</text>' % (idx, hx, nums, key_no(k)))
+                p.append('<text class="sy" x="%d" y="%d">%s</text>' % (hx, nums + 16, SYL[k[0]]))
                 x += adv
             x += 4
             p.append('<line class="bar" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (x, top, x, bottom))
             x += 10
-        p.append('<text class="lg" x="4" y="%d">клавиша</text>' % (bottom + 40))
+        p.append('<text class="lg" x="4" y="%d">клавиша</text>' % nums)
         p.append('</svg>')
         out.append(''.join(p))
     return '<div class="staff-wrap">%s</div>' % ''.join(out)

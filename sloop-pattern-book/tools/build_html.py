@@ -33,6 +33,16 @@ ORDER = [
     ('kurs-11-chernye-klavishi.md', 'Курс с нуля', '11. Чёрные клавиши-волшебники'),
     ('kurs-12-pesnya.md', 'Курс с нуля', '12. Из лупа — песня'),
     ('kurs-13-dalshe.md', 'Курс с нуля', '13. Дальше — сам'),
+    ('zhanr-00-vvedenie.md', 'Современные жанры', 'Как устроены жанры'),
+    ('zhanr-01-trap.md', 'Современные жанры', 'Трэп'),
+    ('zhanr-02-drill.md', 'Современные жанры', 'Дрилл'),
+    ('zhanr-03-hyperpop.md', 'Современные жанры', 'Хайперпоп'),
+    ('zhanr-04-rage.md', 'Современные жанры', 'Рейдж'),
+    ('zhanr-05-phonk.md', 'Современные жанры', 'Фонк'),
+    ('zhanr-06-plugg.md', 'Современные жанры', 'Плагг и плаггнб'),
+    ('zhanr-07-jersey.md', 'Современные жанры', 'Джерси-клаб'),
+    ('zhanr-08-emo.md', 'Современные жанры', 'Эмо-рэп'),
+    ('zhanr-09-hiphop.md', 'Современные жанры', 'Хип-хоп 2020-х'),
     ('shkola-1-ritm-i-udarnye.md', 'Школа', 'Ритм и ударные'),
     ('shkola-2-noty-lady-akkordy.md', 'Школа', 'Ноты, лады, аккорды'),
     ('shkola-3-bas-melodiya-forma.md', 'Школа', 'Бас, мелодия, форма'),
@@ -259,26 +269,39 @@ class Book:
             return self.loop(o, fn)
         raise ValueError('unknown block %s in %s' % (lang, fn))
 
-    def song_events(self, notes, scale, voice, t0=0.0):
+    @staticmethod
+    def swung(t, swing):
+        """MPC swing: the second sixteenth of each pair comes later (50 = straight)."""
+        if swing > 50 and abs(t % 0.5 - 0.25) < 1e-9:
+            return t - 0.25 + 0.5 * swing / 100
+        return t
+
+    def song_events(self, notes, scale, voice, t0=0.0, swing=50):
+        """notes: [(key, beats)] or [(key, beats, slide)] -> player events
+        [time, beats, midi, voice, keys to light, note index, slide-to midi]"""
+        def mid(k):
+            m = F.white_midi(k, scale) if '#' not in k else F.midi(k)
+            return m - 24 if voice == 'bass' else m
         ev, t = [], t0
-        for i, (k, b) in enumerate(notes):
+        notes = [n if len(n) == 3 else (n[0], n[1], False) for n in notes]
+        for i, (k, b, sl) in enumerate(notes):
             if k is not None:
-                m = F.white_midi(k, scale) if '#' not in k else F.midi(k)
-                if voice == 'bass':
-                    m -= 24
-                ev.append([t, b, m, voice, [k], i])
+                nxt = notes[i + 1][0] if i + 1 < len(notes) else None
+                ev.append([self.swung(t, swing), b, mid(k), voice, [k], i, mid(nxt) if sl and nxt else None])
             t += b
         return ev, t - t0
 
     def song(self, o, fn):
-        notes = F.parse_notes(o['notes'])
+        notes_ex = F.parse_notes_ex(o['notes'])
+        notes = [(k, b) for k, b, _ in notes_ex]
         scale = o.get('scale', 'MAJ')
         voice = o.get('voice', 'lead')
         bpm = int(o.get('bpm', 90))
-        ev, beats = self.song_events(notes, scale, voice)
+        ev, beats = self.song_events(notes_ex, scale, voice)
         beats = -(-beats // 4) * 4
         pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': []})
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [],
+                              'b808': o.get('bass_sound') == '808'})
         meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         used = {k: '' for k, _ in notes if k}
@@ -320,13 +343,22 @@ class Book:
         q = '' if third == 4 else ('°' if fifth == 6 else 'm') if third == 3 else 'sus4' if third == 5 else ''
         if kind == 'POWER':
             q = '5'
-        name = F.NOTE_NAMES[ms[0] % 12] + q + ('7' if len(ms) > 3 else '')
+        sev = ''
+        if len(ms) > 3:                   # the seventh's kind: maj7, 7, m7, m7♭5
+            seventh = ms[3] - ms[0]
+            if q == '°':
+                q, sev = 'm', '7♭5'
+            elif seventh == 11:
+                sev = 'maj7'
+            else:
+                sev = '7'
+        names = F.NOTE_NAMES if scale in ('MAJ', 'LYD', 'MIX', 'PEN') else F.FLAT_NAMES
+        name = names[ms[0] % 12] + q + sev
         deg = F.LETTERS.index(root[0]) % 7
         rom = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][deg]
         if q in ('m', '°'):
             rom = rom.lower() + ('°' if q == '°' else '')
-        if len(ms) > 3:
-            rom += '7'
+        rom += {'maj7': 'maj7', '7': '7', '7♭5': 'ø7'}.get(sev, '')
         return root, mods, ms, name, rom
 
     def chords(self, o, fn):
@@ -359,6 +391,23 @@ class Book:
         return '<figure class="course" data-pid="%d">%s%s<div class="ccards">%s</div>%s%s</figure>' % (
             pid, title, self.play_bar(pid, meta), ''.join(cards), kb, note)
 
+    @staticmethod
+    def fill_loop(ev, total, beats, what, fn):
+        """Repeat a part shorter than the loop; refuse lengths that do not fit."""
+        if abs(total - beats) < 1e-9:
+            return ev
+        reps = beats / total
+        if total > beats or abs(reps - round(reps)) > 1e-9:
+            raise ValueError('%s in %s: %s beats, the loop has %s' % (what, fn, total, beats))
+        out = []
+        for r in range(int(round(reps))):
+            for e in ev:
+                x = list(e)
+                x[0] += r * total
+                x[5] = x[5] if r == 0 else -1
+                out.append(x)
+        return out
+
     def loop(self, o, fn):
         bpm = int(o.get('bpm', 90))
         scale = o.get('scale', 'MAJ')
@@ -366,21 +415,39 @@ class Book:
         beats = nbars * 4
         ev, dr = [], []
         tracks = []
+        swing = int(o.get('swing', 50))
         if o.get('drums'):
             lanes = []
             for part in o['drums'].split(';'):
                 ln, _, pat = part.strip().partition(':')
+                if len(pat) % 16 or nbars * 16 % len(pat):
+                    raise ValueError('drum lane %s: %d steps in %s' % (ln, len(pat), fn))
                 lanes.append((int(ln), pat))
-            for b in range(nbars):
-                for ln, pat in lanes:
+            for ln, pat in lanes:
+                for rep in range(nbars * 16 // len(pat)):
                     for st, ch in enumerate(pat):
-                        if ch != '.':
-                            dr.append([b * 4 + st / 4, ln, {'g': .22, 'x': .5, 'X': .8, 'O': 1}.get(ch, .8), 'drums'])
-            rows = ''.join('<tr><th class="lab"><span class="ln">%d</span> %s</th>%s</tr>' % (
-                ln, F.esc(LANES[ln]),
-                ''.join('<td class="c v-%s%s"></td>' % ({'.': 'e'}.get(ch, ch), ' gs' if j % 4 == 0 else '') for j, ch in enumerate(pat)))
-                for ln, pat in lanes)
-            tracks.append(('drums', 4, 'Ударные', '<div class="grid-scroll"><table class="grid drum">%s</table></div>' % rows))
+                        if ch in '.-':
+                            continue
+                        t0 = rep * len(pat) / 4 + st / 4
+                        n = int(ch) if ch in '234' else 1
+                        vol = {'g': .22, 'x': .5, 'X': .8, 'O': 1}.get(ch, .8)
+                        for k in range(n):                     # a ratchet: n hits inside the step
+                            dr.append([self.swung(t0, swing) + k * 0.25 / n, ln, vol, 'drums'])
+            nb = max(len(pat) for _, pat in lanes) // 16
+            tables = []
+            for bi in range(nb):                    # one small table a bar: it fits a phone
+                rows = ''
+                for ln, pat in lanes:
+                    seg = pat[(bi * 16) % len(pat):(bi * 16) % len(pat) + 16]
+                    rows += '<tr><th class="lab"><span class="ln">%d</span> %s</th>%s</tr>' % (
+                        ln, F.esc(F.DRUM_SHORT[ln - 1]),
+                        ''.join('<td class="c v-%s%s">%s</td>' % ({'.': 'e', '2': 'r', '3': 'r', '4': 'r'}.get(ch, ch),
+                                                                 ' gs' if j % 4 == 0 else '', ch if ch in '234' else '')
+                                for j, ch in enumerate(seg)))
+                cap = '<caption>такт %d</caption>' % (bi + 1) if nb > 1 else ''
+                tables.append('<table class="grid drum mini">%s%s</table>' % (cap, rows))
+            rows = ''.join(tables)
+            tracks.append(('drums', 4, 'Ударные', '<div class="grid-scroll">%s</div>' % rows))
         if o.get('chords'):
             toks = o['chords'].split()
             cards = []
@@ -389,21 +456,26 @@ class Book:
                 per = beats / len(toks)
                 ev.append([i * per, per, ms, 'pad', [F.midi_name(m) for m in ms], -1])
                 cards.append('<span class="ccard"><b>%s</b><span>%s</span><i>%s</i></span>' % (html.escape(tok), html.escape(name), html.escape(rom)))
-            tracks.append(('pad', 2, 'Аккорды (CHORD = TRIAD)', '<div class="ccards">%s</div>' % ''.join(cards)))
+            tracks.append(('pad', 2, 'Аккорды (CHORD = %s)' % o.get('kind', 'TRIAD'), '<div class="ccards">%s</div>' % ''.join(cards)))
         if o.get('bass'):
-            notes = F.parse_notes(o['bass'])
-            e, _ = self.song_events(notes, scale, 'bass')
+            notes_ex = F.parse_notes_ex(o['bass'])
+            notes = [(k, b) for k, b, _ in notes_ex]
+            e, tot = self.song_events(notes_ex, scale, 'bass', swing=swing)
+            e = self.fill_loop(e, tot, beats, 'bass', fn)
             for x in e:
                 x[5] = -1
             ev += e
             tracks.append(('bass', 1, 'Бас', F.chips(notes, scale).replace(' data-i="', ' data-x="')))
         if o.get('melody'):
-            notes = F.parse_notes(o['melody'])
-            e, _ = self.song_events(notes, scale, 'lead')
+            notes_ex = F.parse_notes_ex(o['melody'])
+            notes = [(k, b) for k, b, _ in notes_ex]
+            e, tot = self.song_events(notes_ex, scale, 'lead', swing=swing)
+            e = self.fill_loop(e, tot, beats, 'melody', fn)
             ev += e
             tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))
         pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr})
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr,
+                              'b808': o.get('bass_sound') == '808'})
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         rows = ''.join('<div class="trk t%d"><label class="tmute"><input type="checkbox" checked data-voice="%s"> '
                        '<span class="tno">%d</span> %s</label>%s</div>' % (n, v, n, html.escape(t), body)
