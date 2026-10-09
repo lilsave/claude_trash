@@ -134,6 +134,7 @@ button.play {
 button.play .ico { font-size: 12px; width: 12px; text-align: center; }
 button.play.on { background: var(--fg); color: var(--bg); }
 .grid-bar .meta { color: var(--muted); font-size: 13.5px; }
+.grid-bar .aud { font: 600 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; color: var(--fg); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; white-space: nowrap; }
 .grid-bar .fill { font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .grid-scroll { overflow-x: auto; padding: 10px 12px 12px; }
 table.grid { border-collapse: separate; border-spacing: 2px; font-size: 12px; }
@@ -325,8 +326,8 @@ nav.side li.chap.active.done > a::after { color: var(--accent-fg); }
   <button class="iconbtn" id="themeBtn" aria-label="Сменить тему" title="Светлая / тёмная тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
 </header>
 <div class="scrim" id="scrim"></div>
-<noscript><div class="nosound">Ты смотришь книгу в режиме просмотра файла: картинки и ноты на месте, а звук и кнопки «Слушать» здесь не работают. Открой файл в браузере — на Android в Chrome, на iPhone по ссылке на книгу в Safari (см. «Как открыть в самолёте» на обложке).</div></noscript>
-<div class="nosound" id="noSound" hidden>Звук не запустился. Так бывает в просмотре файлов внутри приложений. Открой книгу в браузере: на Android — файл в Chrome, на iPhone — ссылку на книгу в Safari. Проверь громкость телефона. <button type="button" id="noSoundClose">Понятно</button></div>
+<noscript><div class="nosound">Ты смотришь книгу в режиме просмотра файла: картинки и ноты на месте, а звук и кнопки «Слушать» здесь не работают. Слушай примеры из аудио-пакета: код рядом с кнопкой (например, ♪ К02-1) — это имя файла в архиве sloop-audio.zip. Или открой книгу в браузере: на Android в Chrome, на iPhone по ссылке в Safari (см. «Как открыть в самолёте» на обложке).</div></noscript>
+<div class="nosound" id="noSound" hidden>Звук не запустился. Так бывает в просмотре файлов внутри приложений. Послушай этот пример в аудио-пакете: файл с кодом, который стоит рядом с кнопкой. Или открой книгу в браузере: на Android — файл в Chrome, на iPhone — ссылку в Safari. Проверь громкость телефона. <button type="button" id="noSoundClose">Понятно</button></div>
 <div class="layout">
   <nav class="side" id="side"><ul>
 {{NAV}}
@@ -685,11 +686,26 @@ function lightTick(now) {
   lit = lit.filter(l => { if (l.until <= now) { l.els.forEach(x => x.classList.remove('lit')); return false; } return true; });
 }
 function lightClear() { lit.forEach(l => l.els.forEach(x => x.classList.remove('lit'))); lit = []; }
-function startEv(btn, p, fig) {
-  const sb = 60 / p.bpm;
-  const evs = p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5], s: e[6] }))
+function playEv(p, e, t, sb) {
+  if (e.v === 'drums') { DRUM[e.lane] && DRUM[e.lane](t, e.vol); return; }
+  const ms = Array.isArray(e.m) ? e.m : [e.m];
+  const dur = e.d * sb;
+  ms.forEach(m => {
+    if (e.v === 'pad') voice((p.inst && p.inst.pad) || 'pad', t, m, dur * 0.97, 0.3);
+    else if (e.v === 'lead' && p.inst && p.inst.lead && e.s == null) voice(p.inst.lead, t, m, dur, 0.42);
+    else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4, e.s, t + dur);
+    else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
+    else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
+  });
+}
+function evList(p) {
+  return p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5], s: e[6] }))
     .concat(p.dr.map(d => ({ t: d[0], lane: d[1], vol: d[2], v: 'drums' })))
     .sort((a, b) => a.t - b.t);
+}
+function startEv(btn, p, fig) {
+  const sb = 60 / p.bpm;
+  const evs = evList(p);
   const me = { p, fig, btn, queue: [], base: ac.currentTime + 0.08, idx: 0 };
   cur = me;
   const muted = () => new Set([...fig.querySelectorAll('input[data-voice]')].filter(x => !x.checked).map(x => x.dataset.voice));
@@ -699,19 +715,8 @@ function startEv(btn, p, fig) {
     while (me.base + evs[me.idx].t * sb < ac.currentTime + 0.15) {
       const e = evs[me.idx], t = me.base + e.t * sb;
       if (!off.has(e.v)) {
-        if (e.v === 'drums') DRUM[e.lane] && DRUM[e.lane](t, e.vol);
-        else {
-          const ms = Array.isArray(e.m) ? e.m : [e.m];
-          const dur = e.d * sb;
-          ms.forEach(m => {
-            if (e.v === 'pad') voice((p.inst && p.inst.pad) || 'pad', t, m, dur * 0.97, 0.3);
-            else if (e.v === 'lead' && p.inst && p.inst.lead && e.s == null) voice(p.inst.lead, t, m, dur, 0.42);
-            else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4, e.s, t + dur);
-            else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
-            else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
-          });
-          me.queue.push({ t, e, until: t + dur * 0.92 });
-        }
+        playEv(p, e, t, sb);
+        if (e.v !== 'drums') me.queue.push({ t, e, until: t + e.d * sb * 0.92 });
       }
       me.idx++;
       if (me.idx >= evs.length) { me.idx = 0; me.base += p.beats * sb; }

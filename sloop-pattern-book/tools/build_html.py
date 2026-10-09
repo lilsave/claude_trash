@@ -84,6 +84,38 @@ class Book:
     def __init__(self, root):
         self.root = root
         self.patterns = []
+        self.cur_fn, self.cur_head, self.n_in_ch, self.seen = '', '', 0, {}
+
+    def add(self, d, title=None):
+        """Register a playable example; it gets a code like К02-1 that names its file in the audio pack."""
+        m = re.match(r'^(kurs|zhanr|shkola|\d)-?(\d*)', self.cur_fn)
+        if m:
+            letter = {'kurs': 'К', 'zhanr': 'Ж', 'shkola': 'Ш'}.get(m.group(1), 'С')
+            num = m.group(2) if m.group(1) in ('kurs', 'zhanr', 'shkola') else self.cur_fn[:2]
+        else:
+            letter, num = 'О', ''
+        self.n_in_ch += 1
+        name = re.sub(r'\[([^\]]+)\]\([^)]*\)', r'\1', title or self.cur_head or '')
+        name = re.sub(r'[`*_<>:"\\|?]', ' ', name).replace('/', '⁄')
+        code = '%s%s-%d' % (letter, num, self.n_in_ch)
+        own = re.match(r'^([A-Z]\d{2})\b\s*·?\s*', name)
+        if letter == 'С' and own:          # the reference already numbers its examples: D05, B03, M17…
+            code, name = own.group(1), name[own.end():]
+            self.seen[code] = self.seen.get(code, 0) + 1
+            if self.seen[code] > 1:
+                code += '-%d' % self.seen[code]
+        name = re.sub(r'\s+', ' ', name).strip(' .,·—-')
+        if len(name) > 48:
+            name = name[:48].rsplit(' ', 1)[0].rstrip(' ,—-') + '…'
+        self.names[name] = self.names.get(name, 0) + 1
+        if self.names[name] > 1:
+            name += ' (%d)' % self.names[name]
+        d['aud'] = {'code': code, 'name': name, 'ch': self.cur_fn[:-3]}
+        self.patterns.append(d)
+        return len(self.patterns) - 1
+
+    def code_badge(self, pid):
+        return '<span class="aud" title="Этот пример в аудио-пакете">♪ %s</span>' % self.patterns[pid]['aud']['code']
 
     # ------------------------------------------------------------ inline
     def link(self, target, cur):
@@ -118,6 +150,7 @@ class Book:
     # ------------------------------------------------------------ blocks
     def convert(self, fn):
         lines = open(os.path.join(self.root, fn), encoding='utf-8').read().split('\n')
+        self.cur_fn, self.cur_head, self.n_in_ch, self.names = fn, '', 0, {}
         out, toc, used = [], [], {}
         ctx = []                       # paragraph text since the last heading
         i = 0
@@ -147,6 +180,8 @@ class Book:
                 out.append('<h%d id="%s">%s</h%d>' % (lvl, hid, self.inline(text, fn), lvl))
                 if lvl in (2, 3):
                     toc.append((lvl, hid, re.sub(r'[`*]', '', text)))
+                if lvl <= 3:
+                    self.cur_head = re.sub(r'[`*]', '', text)
                 if lvl <= 3:
                     ctx = []
                 i += 1
@@ -243,8 +278,8 @@ class Book:
 
     def play_bar(self, pid, meta, extra=''):
         return ('<div class="grid-bar"><button class="play" data-pid="%d" aria-label="Слушать">'
-                '<span class="ico">▶</span><span class="txt">Слушать</span></button>'
-                '<span class="meta">%s</span>%s</div>' % (pid, html.escape(meta), extra))
+                '<span class="ico">▶</span><span class="txt">Слушать</span></button>%s'
+                '<span class="meta">%s</span>%s</div>' % (pid, self.code_badge(pid), html.escape(meta), extra))
 
     @staticmethod
     def inst(o, fn):
@@ -308,9 +343,8 @@ class Book:
         bpm = int(o.get('bpm', 90))
         ev, beats = self.song_events(notes_ex, scale, voice)
         beats = -(-beats // 4) * 4
-        pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [],
-                              'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)})
+        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [],
+                        'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)}, o.get('title'))
         meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         used = {k: '' for k, _ in notes if k}
@@ -391,9 +425,8 @@ class Book:
         for k in list(hl):
             if ',' in hl[k]:
                 hl[k] = hl[k].split(',')[0] + '…'
-        pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': [],
-                              'inst': self.inst(o, fn)})
+        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': [],
+                        'inst': self.inst(o, fn)}, o.get('title'))
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         meta = '%d BPM · CHORD = %s%s · по такту на аккорд' % (bpm, kind, '' if scale == 'MAJ' else ' · ' + scale)
         kb = F.keyboard(hl, sorted(ghost), 'notes', (), None)
@@ -483,9 +516,8 @@ class Book:
             e = self.fill_loop(e, tot, beats, 'melody', fn)
             ev += e
             tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))
-        pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr,
-                              'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)})
+        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr,
+                        'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)}, o.get('title'))
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         rows = ''.join('<div class="trk t%d"><label class="tmute"><input type="checkbox" checked data-voice="%s"> '
                        '<span class="tno">%d</span> %s</label>%s</div>' % (n, v, n, html.escape(t), body)
@@ -570,7 +602,6 @@ class Book:
         for grp in groups_of:
             pid = None
             if all(playable(s) for s in grp):
-                pid = len(self.patterns)
                 lanes, cond, length = {}, [], 0
                 for s in grp:
                     n = sum(len(g) for g in s['head'])
@@ -587,8 +618,8 @@ class Book:
                     lanes[ln] += ['.'] * (length - len(lanes[ln]))
                 if cond:
                     cond += ['.'] * (length - len(cond))
-                self.patterns.append({'type': 'drum', 'bpm': st['bpm'], 'swing': st['swing'], 'spb': spb,
-                                      'len': length, 'lanes': lanes, 'cond': cond or None})
+                pid = self.add({'type': 'drum', 'bpm': st['bpm'], 'swing': st['swing'], 'spb': spb,
+                                'len': length, 'lanes': lanes, 'cond': cond or None})
             html_out.append(self.render_drum(grp, pid, st, bool(any(r[0].startswith('Усл') for s in grp for r in s['rows']))))
         return '\n'.join(html_out)
 
@@ -602,8 +633,8 @@ class Book:
             meta += ' · %s' % st['scale']
         f = '<label class="fill"><input type="checkbox" data-fill="%d"> брейк (GLO + 10)</label>' % pid if fill else ''
         return ('<div class="grid-bar"><button class="play" data-pid="%d" aria-label="Слушать">'
-                '<span class="ico">▶</span><span class="txt">Слушать</span></button>'
-                '<span class="meta">%s</span>%s</div>' % (pid, meta, f))
+                '<span class="ico">▶</span><span class="txt">Слушать</span></button>%s'
+                '<span class="meta">%s</span>%s</div>' % (pid, self.code_badge(pid), meta, f))
 
     def render_drum(self, grp, pid, st, fill):
         parts = []
@@ -710,9 +741,8 @@ class Book:
                     else:
                         notes.append(c)
                 out_voices.append({'notes': notes, 'flags': flags})
-            pid = len(self.patterns)
-            self.patterns.append({'type': 'mel', 'bpm': st['bpm'], 'swing': st['swing'], 'spb': spb,
-                                  'len': length, 'voices': out_voices, 'bass': bass})
+            pid = self.add({'type': 'mel', 'bpm': st['bpm'], 'swing': st['swing'], 'spb': spb,
+                            'len': length, 'voices': out_voices, 'bass': bass})
         # render: one table, every row its own line, step numbers continue across bars
         hc = []
         for gi, g in enumerate(head):
