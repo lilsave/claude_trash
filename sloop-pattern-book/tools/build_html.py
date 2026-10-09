@@ -14,8 +14,25 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fm1_svg as F  # noqa: E402
+
 ORDER = [
     ('README.md', 'Начало', 'Обложка и оглавление'),
+    ('kurs-00-znakomstvo.md', 'Курс с нуля', '0. Знакомство с FM-1'),
+    ('kurs-01-tri-noty.md', 'Курс с нуля', '1. Три ступеньки'),
+    ('kurs-02-oda.md', 'Курс с нуля', '2. Пять пальцев: «Ода к радости»'),
+    ('kurs-03-bratec-yakov.md', 'Курс с нуля', '3. Восьмые: «Братец Яков»'),
+    ('kurs-04-zapis.md', 'Курс с нуля', '4. Записываем мелодию'),
+    ('kurs-05-pervyj-bit.md', 'Курс с нуля', '5. Первый бит'),
+    ('kurs-06-bit-ozhivaet.md', 'Курс с нуля', '6. Бит оживает'),
+    ('kurs-07-mazhor-minor.md', 'Курс с нуля', '7. Мажор и минор'),
+    ('kurs-08-akkordy.md', 'Курс с нуля', '8. Аккорды одним пальцем'),
+    ('kurs-09-bas.md', 'Курс с нуля', '9. Бас'),
+    ('kurs-10-pervyj-lup.md', 'Курс с нуля', '10. Первая песня-луп'),
+    ('kurs-11-chernye-klavishi.md', 'Курс с нуля', '11. Чёрные клавиши-волшебники'),
+    ('kurs-12-pesnya.md', 'Курс с нуля', '12. Из лупа — песня'),
+    ('kurs-13-dalshe.md', 'Курс с нуля', '13. Дальше — сам'),
     ('shkola-1-ritm-i-udarnye.md', 'Школа', 'Ритм и ударные'),
     ('shkola-2-noty-lady-akkordy.md', 'Школа', 'Ноты, лады, аккорды'),
     ('shkola-3-bas-melodiya-forma.md', 'Школа', 'Бас, мелодия, форма'),
@@ -96,10 +113,14 @@ class Book:
         while i < len(lines):
             l = lines[i]
             if l.startswith('```'):
+                lang = l[3:].strip()
                 j = i + 1
                 while j < len(lines) and not lines[j].startswith('```'):
                     j += 1
-                out.append(self.code(lines[i + 1:j], ' '.join(ctx), fn))
+                if lang:
+                    out.append(self.fm1_block(lang, lines[i + 1:j], fn))
+                else:
+                    out.append(self.code(lines[i + 1:j], ' '.join(ctx), fn))
                 i = j + 1
                 continue
             m = re.match(r'^(#{1,6}) (.*)$', l)
@@ -164,6 +185,11 @@ class Book:
                 ctx.extend(items)
                 i = j
                 continue
+            if l.strip() == '[[done]]':
+                out.append('<label class="done"><input type="checkbox" data-lesson="%s"> '
+                           '<span>Урок пройден</span></label>' % pref(fn))
+                i += 1
+                continue
             if not l.strip():
                 i += 1
                 continue
@@ -184,6 +210,202 @@ class Book:
         h2 = [t for t in toc if t[0] == 2]
         toc = [t[1:] for t in (toc if len(h2) < 5 else h2)]   # few sections: list the parts inside them too
         return '\n'.join(out), toc
+
+    # ------------------------------------------------------------ course blocks
+    @staticmethod
+    def opts(lines):
+        o = {}
+        for l in lines:
+            if '=' in l:
+                k, _, v = l.partition('=')
+                o[k.strip()] = v.strip()
+        return o
+
+    @staticmethod
+    def pairs(text):
+        """'C4:1 D4 E4:до' -> {'C4': '1', 'D4': '', 'E4': 'до'}"""
+        out = {}
+        for tok in text.split():
+            k, _, v = tok.partition(':')
+            out[k] = v.replace('_', ' ')
+        return out
+
+    def play_bar(self, pid, meta, extra=''):
+        return ('<div class="grid-bar"><button class="play" data-pid="%d" aria-label="Слушать">'
+                '<span class="ico">▶</span><span class="txt">Слушать</span></button>'
+                '<span class="meta">%s</span>%s</div>' % (pid, html.escape(meta), extra))
+
+    def fm1_block(self, lang, lines, fn):
+        o = self.opts(lines)
+        cap = self.inline(o['caption'], fn) if o.get('caption') else None
+        if lang == 'panel':
+            scr = o['screen'].split(';') if o.get('screen') else None
+            return F.panel(self.pairs(o.get('hl', '')), cap, scr)
+        if lang == 'keys':
+            mode = o.get('mode', 'notes')
+            lit = [int(x) for x in o.get('steps', '').split()]
+            return F.keyboard(self.pairs(o.get('hl', '')), o.get('ghost', '').split(), mode, lit, cap,
+                              play_keys=True)
+        if lang == 'song':
+            return self.song(o, fn)
+        if lang == 'chords':
+            return self.chords(o, fn)
+        if lang == 'loop':
+            return self.loop(o, fn)
+        raise ValueError('unknown block %s in %s' % (lang, fn))
+
+    def song_events(self, notes, scale, voice, t0=0.0):
+        ev, t = [], t0
+        for i, (k, b) in enumerate(notes):
+            if k is not None:
+                m = F.white_midi(k, scale) if '#' not in k else F.midi(k)
+                if voice == 'bass':
+                    m -= 24
+                ev.append([t, b, m, voice, [k], i])
+            t += b
+        return ev, t - t0
+
+    def song(self, o, fn):
+        notes = F.parse_notes(o['notes'])
+        scale = o.get('scale', 'MAJ')
+        voice = o.get('voice', 'lead')
+        bpm = int(o.get('bpm', 90))
+        ev, beats = self.song_events(notes, scale, voice)
+        beats = -(-beats // 4) * 4
+        pid = len(self.patterns)
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': []})
+        meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
+        title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
+        used = {k: '' for k, _ in notes if k}
+        body = []
+        if scale == 'MAJ' and o.get('staff', 'yes') == 'yes':
+            body.append(F.staff(notes))
+        else:
+            body.append(F.chips(notes, scale))
+        body.append(F.keyboard(used, (), 'notes', (), None))
+        if o.get('steps', 'yes') == 'yes':
+            spb = {'1/4': 1, '1/8': 2, '1/16': 4}.get(o.get('div')) or F.grid_spb(notes)
+            tbl, n = F.steps_table(notes, spb)
+            div = {1: '1/4', 2: '1/8', 4: '1/16'}[spb]
+            label = 'Как ввести по шагам: DIV %s, LEN %d' % (div, n)
+            warn = ''
+            if n > 64:
+                warn = ('<p class="cnote">В SLOOP не больше 64 шагов на трек: введи первую половину (LEN 64), '
+                        'сохрани секцию (SAVE + клавиша 5), потом вторую половину — в другую секцию (SAVE + 6).</p>')
+            body.append('<details class="steps"><summary>%s</summary>%s%s</details>' % (label, tbl, warn))
+        note = '<p class="cnote">%s</p>' % self.inline(o['note'], fn) if o.get('note') else ''
+        return '<figure class="course" data-pid="%d">%s%s%s%s</figure>' % (
+            pid, title, self.play_bar(pid, meta), ''.join(body), note)
+
+    @staticmethod
+    def chord_of(tok, scale, kind):
+        root, *mods = tok.split('+')
+        ms = F.chord_keys(root, scale, kind)
+        if 'F#' in mods:                  # CHORD+ F#: major <-> minor
+            third = ms[1] - ms[0]
+            if third in (3, 4):
+                ms[1] = ms[0] + (7 - third)
+        if 'G#' in mods and kind == 'TRIAD':
+            sc = F.SCALES[scale]
+            idx = F.LETTERS.index(root[0]) + 7 * (int(root[1]) - 4) + 6
+            octv, deg = divmod(idx, len(sc))
+            ms.append(60 + 12 * octv + sc[deg])
+        third = ms[1] - ms[0]
+        fifth = ms[2] - ms[0]
+        q = '' if third == 4 else ('°' if fifth == 6 else 'm') if third == 3 else 'sus4' if third == 5 else ''
+        if kind == 'POWER':
+            q = '5'
+        name = F.NOTE_NAMES[ms[0] % 12] + q + ('7' if len(ms) > 3 else '')
+        deg = F.LETTERS.index(root[0]) % 7
+        rom = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][deg]
+        if q in ('m', '°'):
+            rom = rom.lower() + ('°' if q == '°' else '')
+        if len(ms) > 3:
+            rom += '7'
+        return root, mods, ms, name, rom
+
+    def chords(self, o, fn):
+        scale = o.get('scale', 'MAJ')
+        kind = o.get('kind', 'TRIAD')
+        bpm = int(o.get('bpm', 80))
+        bars = o['bars'].split()
+        ev, cards, hl, ghost = [], [], {}, set()
+        for i, tok in enumerate(bars):
+            root, mods, ms, name, rom = self.chord_of(tok, scale, kind)
+            names = [F.midi_name(m) for m in ms]
+            ev.append([i * 4, 4, ms, 'pad', names, i])
+            hl.setdefault(root, str(i + 1) if root not in hl else hl[root] + ',' + str(i + 1))
+            for m in mods:
+                if m in ('F#', 'G#', 'A#', 'C#', 'D#'):
+                    hl.setdefault(m + '4', '')
+            ghost.update(n for n in names if n != root)
+            extra = ''.join('<em>+%s</em>' % html.escape(m) for m in mods)
+            cards.append('<span class="ccard" data-i="%d"><small>%d</small><b>%s%s</b><span>%s</span><i>%s</i></span>' % (
+                i, i + 1, html.escape(root), extra, html.escape(name), html.escape(rom)))
+        for k in list(hl):
+            if ',' in hl[k]:
+                hl[k] = hl[k].split(',')[0] + '…'
+        pid = len(self.patterns)
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': []})
+        title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
+        meta = '%d BPM · CHORD = %s%s · по такту на аккорд' % (bpm, kind, '' if scale == 'MAJ' else ' · ' + scale)
+        kb = F.keyboard(hl, sorted(ghost), 'notes', (), None)
+        note = '<p class="cnote">%s</p>' % self.inline(o['note'], fn) if o.get('note') else ''
+        return '<figure class="course" data-pid="%d">%s%s<div class="ccards">%s</div>%s%s</figure>' % (
+            pid, title, self.play_bar(pid, meta), ''.join(cards), kb, note)
+
+    def loop(self, o, fn):
+        bpm = int(o.get('bpm', 90))
+        scale = o.get('scale', 'MAJ')
+        nbars = int(o.get('bars', 4))
+        beats = nbars * 4
+        ev, dr = [], []
+        tracks = []
+        if o.get('drums'):
+            lanes = []
+            for part in o['drums'].split(';'):
+                ln, _, pat = part.strip().partition(':')
+                lanes.append((int(ln), pat))
+            for b in range(nbars):
+                for ln, pat in lanes:
+                    for st, ch in enumerate(pat):
+                        if ch != '.':
+                            dr.append([b * 4 + st / 4, ln, {'g': .22, 'x': .5, 'X': .8, 'O': 1}.get(ch, .8), 'drums'])
+            rows = ''.join('<tr><th class="lab"><span class="ln">%d</span> %s</th>%s</tr>' % (
+                ln, F.esc(LANES[ln]),
+                ''.join('<td class="c v-%s%s"></td>' % ({'.': 'e'}.get(ch, ch), ' gs' if j % 4 == 0 else '') for j, ch in enumerate(pat)))
+                for ln, pat in lanes)
+            tracks.append(('drums', 4, 'Ударные', '<div class="grid-scroll"><table class="grid drum">%s</table></div>' % rows))
+        if o.get('chords'):
+            toks = o['chords'].split()
+            cards = []
+            for i, tok in enumerate(toks):
+                root, mods, ms, name, rom = self.chord_of(tok, scale, o.get('kind', 'TRIAD'))
+                per = beats / len(toks)
+                ev.append([i * per, per, ms, 'pad', [F.midi_name(m) for m in ms], -1])
+                cards.append('<span class="ccard"><b>%s</b><span>%s</span><i>%s</i></span>' % (html.escape(tok), html.escape(name), html.escape(rom)))
+            tracks.append(('pad', 2, 'Аккорды (CHORD = TRIAD)', '<div class="ccards">%s</div>' % ''.join(cards)))
+        if o.get('bass'):
+            notes = F.parse_notes(o['bass'])
+            e, _ = self.song_events(notes, scale, 'bass')
+            for x in e:
+                x[5] = -1
+            ev += e
+            tracks.append(('bass', 1, 'Бас', F.chips(notes, scale).replace(' data-i="', ' data-x="')))
+        if o.get('melody'):
+            notes = F.parse_notes(o['melody'])
+            e, _ = self.song_events(notes, scale, 'lead')
+            ev += e
+            tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))
+        pid = len(self.patterns)
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr})
+        title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
+        rows = ''.join('<div class="trk t%d"><label class="tmute"><input type="checkbox" checked data-voice="%s"> '
+                       '<span class="tno">%d</span> %s</label>%s</div>' % (n, v, n, html.escape(t), body)
+                       for v, n, t, body in tracks)
+        note = '<p class="cnote">%s</p>' % self.inline(o['note'], fn) if o.get('note') else ''
+        return '<figure class="course loop" data-pid="%d">%s%s%s%s</figure>' % (
+            pid, title, self.play_bar(pid, '%d BPM · %d такта · галочки = mute (как GLO + 1…4)' % (bpm, nbars)), rows, note)
 
     def split_row(self, row):
         codes = []

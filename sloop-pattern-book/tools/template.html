@@ -178,6 +178,106 @@ table.grid th.h.now { color: var(--accent); }
 .pager a { display: block; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; text-decoration: none; background: var(--surface); max-width: 48%; }
 .pager a small { display: block; color: var(--muted); font-size: 12px; }
 
+
+/* ---------- course: FM-1 pictures ---------- */
+figure.pic { margin: 14px 0 18px; }
+figure.pic figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+svg.fm1 { width: 100%; height: auto; display: block; }
+svg.fm1 .dev { fill: #e8721f; }
+svg.fm1 text { text-anchor: middle; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+svg.kbd .key rect:first-child { fill: #8c3b25; }
+svg.kbd .key .slot { fill: #3e170d; }
+svg.kbd .key.mark .slot { fill: #8ad4ff; }
+svg.kbd .key.on rect:first-child { fill: #1f7fe0; }
+svg.kbd .key.on .slot { fill: #d8f0ff; }
+svg.kbd .key.ghost rect:first-child { stroke: #1f7fe0; stroke-width: 3.5; stroke-dasharray: 6 4; }
+svg.kbd .key.lit rect:first-child { fill: #ffe066; }
+svg.kbd .key.lit .slot { fill: #fff; }
+svg.kbd .key.lit text { fill: #3e170d; }
+svg.kbd .lab { fill: #f6cdb7; font-size: 9.5px; font-weight: 700; }
+svg.kbd .num { fill: #f8dccd; font-size: 14px; font-weight: 800; }
+svg.kbd .nm { fill: #3a1408; font-size: 13px; font-weight: 800; }
+svg.kbd .nm.dr { font-size: 11px; }
+svg.kbd .syl { fill: #5b2312; font-size: 11px; }
+svg.kbd .syl.dr { font-size: 9.5px; }
+svg.fm1 .badge { fill: #fff; }
+svg.fm1 .bt { fill: #0f4f9e; font-size: 13px; font-weight: 800; }
+svg.kbd.playable .key { cursor: pointer; }
+svg.panel .scr { fill: #0d0f12; }
+svg.panel .st { fill: #9fe6ff; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; text-anchor: start; }
+svg.panel .pad { fill: #a24426; }
+svg.panel .ctl.knob circle { fill: #1c1b1a; stroke: #4a2416; stroke-width: 4; }
+svg.panel .ctl.knob line { stroke: #e9e2da; stroke-width: 3; stroke-linecap: round; }
+svg.panel .cl { fill: #fff2e6; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+svg.panel .ctl.btn rect { fill: #8c3b25; }
+svg.panel .bl { fill: #f7d6c4; font-size: 11px; font-weight: 800; }
+svg.panel .bl.small { font-size: 8.5px; }
+svg.panel .ctl.on rect, svg.panel .ctl.on circle { stroke: #6cc6ff; stroke-width: 5; }
+svg.panel .ctl.btn.on rect { fill: #1f7fe0; }
+svg.panel .ctl.btn.on .bl { fill: #fff; }
+
+figure.course {
+  margin: 16px 0 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+figure.course > figure.pic, figure.course > .staff-wrap, figure.course > .chips, figure.course > .ccards,
+figure.course > details, figure.course > .cnote, figure.course > .trk { margin-left: 12px; margin-right: 12px; }
+.ctitle { font-weight: 700; font-size: 16.5px; padding: 12px 12px 0; }
+.cnote { font-size: 14px; color: var(--muted); margin-top: 4px; margin-bottom: 14px; }
+.staff-wrap { overflow-x: auto; padding: 6px 0 0; }
+svg.staff { width: 100%; max-width: 560px; height: auto; display: block; }
+svg.staff + svg.staff { margin-top: 2px; }
+svg.staff .sl { stroke: var(--fg); stroke-opacity: .55; stroke-width: 1.2; }
+svg.staff .bar { stroke: var(--fg); stroke-opacity: .7; stroke-width: 1.4; }
+svg.staff .hf { fill: var(--fg); }
+svg.staff .hh { fill: var(--surface); stroke: var(--fg); stroke-width: 1.8; }
+svg.staff .stem, svg.staff .flag { stroke: var(--fg); stroke-width: 1.6; fill: none; }
+svg.staff .dot { fill: var(--fg); }
+svg.staff .rest { fill: var(--muted); }
+svg.staff .ts { font: 800 17px -apple-system, "Segoe UI", sans-serif; fill: var(--fg); text-anchor: middle; }
+svg.staff .kn { font: 800 14px -apple-system, "Segoe UI", sans-serif; fill: var(--accent); text-anchor: middle; }
+svg.staff .sy { font: 11px -apple-system, "Segoe UI", sans-serif; fill: var(--muted); text-anchor: middle; }
+svg.staff .lg { font: 10px -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg.staff .nt.lit .hf, svg.staff .nt.lit .hh { fill: var(--accent); stroke: var(--accent); }
+svg.staff .kn.lit { fill: var(--fg); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px 0; padding: 10px 0 4px; }
+.cbar { display: inline-flex; gap: 4px; padding: 0 8px; border-left: 2px solid var(--border); }
+.chip {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 34px; width: calc(var(--w) * 30px + 6px); height: 46px; border-radius: 8px;
+  background: color-mix(in srgb, var(--t1) 22%, var(--surface-2)); line-height: 1.1;
+}
+.chip b { font-size: 16px; } .chip i { font-style: normal; font-size: 11px; color: var(--muted); }
+.chip.rest { background: transparent; border: 1px dashed var(--border); font-size: 11px; color: var(--muted); }
+.chip.lit { background: var(--accent); color: var(--accent-fg); } .chip.lit i { color: var(--accent-fg); }
+.ccards { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0 2px; }
+.ccard {
+  display: inline-flex; flex-direction: column; align-items: center; min-width: 64px; padding: 6px 10px 7px;
+  border-radius: 10px; background: var(--surface-2); line-height: 1.2; border: 2px solid transparent;
+}
+.ccard small { color: var(--muted); font-size: 11px; } .ccard b { font-size: 16px; }
+.ccard b em { font-style: normal; color: var(--t1); font-size: 13px; margin-left: 2px; }
+.ccard span { font-weight: 600; } .ccard i { font-style: normal; color: var(--accent); font-weight: 800; }
+.ccard.lit { border-color: var(--accent); }
+details.steps { margin-top: 6px; margin-bottom: 12px; }
+details.steps summary { cursor: pointer; font-size: 14px; color: var(--link); padding: 4px 0; }
+details.steps .grid-scroll { padding: 6px 0 0; }
+.trk { padding: 10px 0; border-top: 1px solid var(--border); }
+.trk .grid-scroll { padding: 6px 0 0; }
+.tmute { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; cursor: pointer; }
+.tmute input { width: 18px; height: 18px; accent-color: var(--accent); }
+.tno { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 800; }
+.trk.t1 .tno { background: var(--t1); } .trk.t2 .tno { background: var(--t2); }
+.trk.t3 .tno { background: var(--t3); } .trk.t4 .tno { background: var(--t4); }
+label.done {
+  display: flex; align-items: center; gap: 12px; margin: 28px 0 8px; padding: 14px 16px; border-radius: 12px;
+  border: 2px dashed var(--border); font-weight: 700; cursor: pointer; max-width: 420px;
+}
+label.done input { width: 22px; height: 22px; accent-color: var(--t2); }
+label.done:has(input:checked) { border-style: solid; border-color: var(--t2); background: color-mix(in srgb, var(--t2) 12%, var(--surface)); }
+nav.side li.chap.done > a::after { content: " ✓"; color: var(--t2); font-weight: 800; }
+nav.side li.chap.active.done > a::after { color: var(--accent-fg); }
+
 /* ---------- mobile ---------- */
 @media (max-width: 900px) {
   #menuBtn { display: inline-block; }
@@ -411,7 +511,7 @@ function highlight(fig, i) {
 function stop() {
   if (!cur) return;
   clearInterval(cur.timer); cancelAnimationFrame(cur.raf);
-  highlight(cur.fig, null);
+  highlight(cur.fig, null); lightClear();
   cur.btn.classList.remove('on'); cur.btn.querySelector('.ico').textContent = '▶'; cur.btn.querySelector('.txt').textContent = 'Слушать';
   cur = null;
 }
@@ -419,6 +519,11 @@ function start(btn) {
   const pid = +btn.dataset.pid, p = PATTERNS[pid];
   const fig = btn.closest('figure');
   stop(); audio(); ac.resume();
+  if (p.type === 'ev') {
+    startEv(btn, p, fig);
+    btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
+    return;
+  }
   const fillBox = fig.querySelector('input[data-fill]');
   cur = { p, fig, btn, step: 0, next: ac.currentTime + 0.08, queue: [] };
   btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
@@ -445,6 +550,98 @@ document.addEventListener('click', e => {
   if (!btn) return;
   if (cur && cur.btn === btn) stop(); else start(btn);
 });
+
+/* ---------- course player: melodies, chords, loops ---------- */
+function padNote(t, midi, dur, vol) {
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1700; f.Q.value = 0.5;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.06);
+  g.gain.setValueAtTime(vol, t + Math.max(0.07, dur - 0.1));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+  f.connect(g); g.connect(out);
+  [-6, 6].forEach(dt => {
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(midi); o.detune.value = dt;
+    o.connect(f); o.start(t); o.stop(t + dur + 0.3);
+  });
+}
+let lit = [];
+function lightOn(fig, e, until) {
+  const els = [];
+  (e.k || []).forEach(k => fig.querySelectorAll(`svg.kbd .key[data-k="${k}"]`).forEach(x => els.push(x)));
+  if (e.i != null && e.i >= 0) fig.querySelectorAll(`[data-i="${e.i}"]`).forEach(x => els.push(x));
+  els.forEach(x => x.classList.add('lit'));
+  lit.push({ els, until });
+}
+function lightTick(now) {
+  lit = lit.filter(l => { if (l.until <= now) { l.els.forEach(x => x.classList.remove('lit')); return false; } return true; });
+}
+function lightClear() { lit.forEach(l => l.els.forEach(x => x.classList.remove('lit'))); lit = []; }
+function startEv(btn, p, fig) {
+  const sb = 60 / p.bpm;
+  const evs = p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5] }))
+    .concat(p.dr.map(d => ({ t: d[0], lane: d[1], vol: d[2], v: 'drums' })))
+    .sort((a, b) => a.t - b.t);
+  const me = { p, fig, btn, queue: [], base: ac.currentTime + 0.08, idx: 0 };
+  cur = me;
+  const muted = () => new Set([...fig.querySelectorAll('input[data-voice]')].filter(x => !x.checked).map(x => x.dataset.voice));
+  me.timer = setInterval(() => {
+    if (!evs.length) return;
+    const off = muted();
+    while (me.base + evs[me.idx].t * sb < ac.currentTime + 0.15) {
+      const e = evs[me.idx], t = me.base + e.t * sb;
+      if (!off.has(e.v)) {
+        if (e.v === 'drums') DRUM[e.lane] && DRUM[e.lane](t, e.vol);
+        else {
+          const ms = Array.isArray(e.m) ? e.m : [e.m];
+          const dur = e.d * sb;
+          ms.forEach(m => {
+            if (e.v === 'pad') padNote(t, m, dur * 0.97, 0.05);
+            else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.32 : 0.24, e.v === 'bass', null, 0);
+          });
+          me.queue.push({ t, e, until: t + dur * 0.92 });
+        }
+      }
+      me.idx++;
+      if (me.idx >= evs.length) { me.idx = 0; me.base += p.beats * sb; }
+    }
+  }, 25);
+  const draw = () => {
+    if (cur !== me) return;
+    const now = ac.currentTime;
+    while (me.queue.length && me.queue[0].t <= now) { const q = me.queue.shift(); lightOn(fig, q.e, q.until); }
+    lightTick(now);
+    me.raf = requestAnimationFrame(draw);
+  };
+  me.raf = requestAnimationFrame(draw);
+}
+const KEYMIDI = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
+document.addEventListener('pointerdown', e => {
+  const key = e.target.closest('svg.kbd.playable .key');
+  if (!key) return;
+  audio(); ac.resume();
+  const t = ac.currentTime + 0.01;
+  synthNote(t, KEYMIDI(key.dataset.k), 0.45, 0.24, false, null, 0);
+  key.classList.add('lit');
+  setTimeout(() => key.classList.remove('lit'), 320);
+});
+
+/* ---------- lessons done ---------- */
+(function () {
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem('sloop-done') || '{}'); } catch (e) {}
+  const mark = () => chaps.forEach(c => c.classList.toggle('done', !!done[c.dataset.sec.replace(/^ch-/, '')]));
+  document.querySelectorAll('input[data-lesson]').forEach(cb => {
+    cb.checked = !!done[cb.dataset.lesson];
+    cb.addEventListener('change', () => {
+      done[cb.dataset.lesson] = cb.checked;
+      try { localStorage.setItem('sloop-done', JSON.stringify(done)); } catch (e) {}
+      mark();
+    });
+  });
+  mark();
+})();
+
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 window.addEventListener('hashchange', stop);
 </script>
