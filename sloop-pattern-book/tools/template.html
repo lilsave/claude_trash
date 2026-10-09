@@ -500,7 +500,7 @@ function schedule(p, i, t, fill) {
       if ((fl === 'S' || fl === 'B') && typeof vc.notes[j] === 'number') {
         slideTo = vc.notes[j]; slideAt = t + len; len += stepDur(p, j) * 0.9;
       }
-      const vol = (p.bass ? 0.32 : 0.22) * (fl === 'A' || fl === 'B' ? 1.35 : 1);
+      const vol = (p.bass ? 0.36 : 0.4) * (fl === 'A' || fl === 'B' ? 1.3 : 1);
       synthNote(t, m, Math.max(0.05, len * (slideTo != null ? 1 : 0.92)), vol, p.bass, slideTo, slideAt);
     }
   }
@@ -598,8 +598,8 @@ function startEv(btn, p, fig) {
           const ms = Array.isArray(e.m) ? e.m : [e.m];
           const dur = e.d * sb;
           ms.forEach(m => {
-            if (e.v === 'pad') padNote(t, m, dur * 0.97, 0.05);
-            else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.32 : 0.24, e.v === 'bass', null, 0);
+            if (e.v === 'pad') padNote(t, m, dur * 0.97, 0.09);
+            else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
           });
           me.queue.push({ t, e, until: t + dur * 0.92 });
         }
@@ -623,7 +623,7 @@ document.addEventListener('pointerdown', e => {
   if (!key) return;
   audio(); ac.resume();
   const t = ac.currentTime + 0.01;
-  synthNote(t, KEYMIDI(key.dataset.k), 0.45, 0.24, false, null, 0);
+  synthNote(t, KEYMIDI(key.dataset.k), 0.45, 0.42, false, null, 0);
   key.classList.add('lit');
   setTimeout(() => key.classList.remove('lit'), 320);
 });
