@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Книга партий SLOOP</title>
+<meta name="description" content="Нотная грамота на клавиатуре FM-1 и книга ударных, басов, аккордов и мелодий для прошивки SLOOP 2.4">
+<style>
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --surface-2: #efece4;
+  --fg: #1d1b18;
+  --muted: #6b665c;
+  --border: #dcd7cc;
+  --accent: #e8711c;
+  --accent-fg: #ffffff;
+  --link: #b4520a;
+  --code-bg: #ece8de;
+  --t1: #2f7fd8; --t2: #2e9e5b; --t3: #c99a06; --t4: #e8711c;
+  --cell: #e9e5db;
+  --cell-beat: #e0dbcf;
+  --now: #1d1b18;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141311; --surface: #1d1c19; --surface-2: #26241f; --fg: #ece8e0; --muted: #a39d90;
+    --border: #36332c; --accent: #ff8a3d; --accent-fg: #1a1209; --link: #ffa868; --code-bg: #2a2823;
+    --t1: #5aa2ff; --t2: #4cc77f; --t3: #f0c430; --t4: #ff8a3d;
+    --cell: #2a2823; --cell-beat: #322f29; --now: #ece8e0;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141311; --surface: #1d1c19; --surface-2: #26241f; --fg: #ece8e0; --muted: #a39d90;
+  --border: #36332c; --accent: #ff8a3d; --accent-fg: #1a1209; --link: #ffa868; --code-bg: #2a2823;
+  --t1: #5aa2ff; --t2: #4cc77f; --t3: #f0c430; --t4: #ff8a3d;
+  --cell: #2a2823; --cell-beat: #322f29; --now: #ece8e0;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.mono, code, pre, .grid { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+/* ---------- layout ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.brand .bars { display: inline-flex; gap: 3px; }
+.brand .bars i { width: 5px; height: 18px; border-radius: 2px; display: block; }
+.brand .bars i:nth-child(1) { background: var(--t1); } .brand .bars i:nth-child(2) { background: var(--t2); }
+.brand .bars i:nth-child(3) { background: var(--t3); } .brand .bars i:nth-child(4) { background: var(--t4); }
+.brand small { font-weight: 500; color: var(--muted); }
+.spacer { flex: 1; }
+.iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--fg); border-radius: 8px;
+  height: 36px; min-width: 36px; padding: 0 10px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.iconbtn:hover { border-color: var(--accent); }
+#menuBtn { display: none; }
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+nav.side {
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 20px 12px 40px 16px;
+  border-right: 1px solid var(--border);
+}
+nav.side ul { list-style: none; margin: 0; padding: 0; }
+nav.side li.part {
+  margin: 18px 8px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700;
+}
+nav.side li.part:first-child { margin-top: 0; }
+nav.side li.chap > a {
+  display: block; padding: 7px 10px; border-radius: 8px; color: var(--fg); text-decoration: none; font-size: 15px;
+}
+nav.side li.chap > a:hover { background: var(--surface-2); }
+nav.side li.chap.active > a { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+nav.side ul.sub { display: none; margin: 4px 0 8px 10px; border-left: 2px solid var(--border); }
+nav.side li.chap.active ul.sub { display: block; }
+nav.side ul.sub a {
+  display: block; padding: 4px 10px; font-size: 13.5px; line-height: 1.35; color: var(--muted); text-decoration: none;
+}
+nav.side ul.sub a:hover { color: var(--fg); }
+main { min-width: 0; padding: 28px 40px 80px; }
+section.chapter { max-width: 900px; }
+.js section.chapter { display: none; }
+.js section.chapter.shown { display: block; }
+
+/* ---------- typography ---------- */
+h1 { font-size: 34px; line-height: 1.2; margin: 8px 0 18px; letter-spacing: -.01em; }
+h2 { font-size: 25px; line-height: 1.25; margin: 40px 0 12px; padding-top: 8px; }
+h3 { font-size: 19px; line-height: 1.3; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+h1, h2, h3 { text-wrap: balance; }
+p, li { max-width: 72ch; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 28px 0; }
+code { background: var(--code-bg); padding: .08em .35em; border-radius: 5px; font-size: .9em; }
+pre {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font-size: 14px; line-height: 1.45;
+}
+blockquote {
+  margin: 18px 0; padding: 10px 16px; border-left: 4px solid var(--accent); background: var(--surface);
+  border-radius: 0 10px 10px 0; box-shadow: var(--shadow);
+}
+blockquote p { margin: 6px 0; }
+.table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.table-wrap table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.table-wrap th, .table-wrap td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table-wrap thead th { background: var(--surface-2); font-weight: 650; white-space: nowrap; }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+
+/* ---------- grids ---------- */
+figure.grid-wrap {
+  margin: 16px 0 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.grid-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+button.play {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 12px; border-radius: 999px;
+  border: 0; background: var(--accent); color: var(--accent-fg); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer;
+}
+button.play .ico { font-size: 12px; width: 12px; text-align: center; }
+button.play.on { background: var(--fg); color: var(--bg); }
+.grid-bar .meta { color: var(--muted); font-size: 13.5px; }
+.grid-bar .fill { font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.grid-scroll { overflow-x: auto; padding: 10px 12px 12px; }
+table.grid { border-collapse: separate; border-spacing: 2px; font-size: 12px; }
+table.grid + table.grid { margin-top: 10px; }
+table.grid caption { text-align: left; font-weight: 650; color: var(--muted); padding: 0 0 4px 2px; font-family: inherit; }
+table.grid th.lab {
+  position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; font-weight: 600;
+  padding: 0 10px 0 2px; white-space: nowrap; min-width: 92px;
+}
+table.grid th.lab .ln {
+  display: inline-block; min-width: 22px; padding: 0 4px; border-radius: 5px; background: color-mix(in srgb, var(--t4) 22%, transparent);
+  color: var(--fg); text-align: center; font-weight: 700;
+}
+table.grid th.h { color: var(--muted); font-weight: 500; text-align: center; height: 18px; }
+table.grid th.h.beat { color: var(--fg); font-weight: 700; }
+table.grid .gs { box-shadow: -3px 0 0 -1px var(--bg); }
+table.drum td.c { width: 26px; min-width: 26px; height: 26px; border-radius: 5px; background: var(--cell); text-align: center; font-weight: 700; color: var(--fg); }
+table.drum td.c.v-O { background: var(--accent); color: var(--accent-fg); }
+table.drum td.c.v-X { background: color-mix(in srgb, var(--accent) 70%, var(--cell)); color: var(--accent-fg); }
+table.drum td.c.v-x { background: color-mix(in srgb, var(--accent) 40%, var(--cell)); }
+table.drum td.c.v-g { background: color-mix(in srgb, var(--accent) 18%, var(--cell)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+table.drum td.c.v-r { background: repeating-linear-gradient(90deg, var(--accent) 0 3px, color-mix(in srgb, var(--accent) 45%, var(--cell)) 3px 6px); color: var(--accent-fg); text-shadow: 0 0 3px rgba(0,0,0,.5); }
+table.drum td.c.v-t { background: color-mix(in srgb, var(--t1) 35%, var(--cell)); }
+table.drum td.c.v-F { background: color-mix(in srgb, var(--t2) 45%, var(--cell)); }
+table.drum td.c.v-N { background: color-mix(in srgb, #d23c3c 40%, var(--cell)); }
+table.drum td.com { padding-left: 10px; color: var(--muted); white-space: nowrap; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+table.mel td.m { min-width: 30px; height: 28px; border-radius: 5px; background: var(--cell); text-align: center; font-weight: 700; padding: 0 2px; }
+table.mel td.note { background: color-mix(in srgb, var(--t1) 55%, var(--cell)); color: var(--fg); }
+table.mel td.tie { background: color-mix(in srgb, var(--t1) 28%, var(--cell)); }
+table.mel tr.flagrow td.m { height: 18px; background: transparent; color: var(--accent); font-size: 11px; }
+table.grid td.now, table.grid th.now { outline: 2px solid var(--now); outline-offset: -1px; }
+table.grid th.h.now { color: var(--accent); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13.5px; color: var(--muted); margin: 10px 0 18px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .hint { flex-basis: 100%; font-size: 12.5px; }
+.legend i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+
+.note-audio { font-size: 13.5px; color: var(--muted); border: 1px dashed var(--border); border-radius: 10px; padding: 8px 12px; margin: 0 0 22px; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--border); }
+.pager a { display: block; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; text-decoration: none; background: var(--surface); max-width: 48%; }
+.pager a small { display: block; color: var(--muted); font-size: 12px; }
+
+/* ---------- mobile ---------- */
+@media (max-width: 900px) {
+  #menuBtn { display: inline-block; }
+  .layout { display: block; }
+  nav.side {
+    position: fixed; z-index: 30; top: 56px; left: 0; width: min(320px, 86vw); height: calc(100vh - 56px);
+    background: var(--bg); transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow);
+  }
+  body.menu-open nav.side { transform: none; }
+  body.menu-open .scrim { display: block; }
+  .scrim { display: none; position: fixed; inset: 56px 0 0 0; background: rgba(0,0,0,.35); z-index: 25; }
+  main { padding: 20px 16px 64px; }
+  h1 { font-size: 27px; } h2 { font-size: 22px; } h3 { font-size: 18px; }
+  .brand small { display: none; }
+}
+@media print {
+  .topbar, nav.side, .grid-bar, .pager { display: none !important; }
+  .layout { display: block; }
+  .js section.chapter { display: block !important; break-before: page; }
+  figure.grid-wrap, .table-wrap { box-shadow: none; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="iconbtn" id="menuBtn" aria-label="Меню">☰</button>
+  <div class="brand"><span class="bars"><i></i><i></i><i></i><i></i></span>SLOOP 2.4 <small>· книга партий и нотная грамота</small></div>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="themeBtn" aria-label="Сменить тему" title="Светлая / тёмная тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<div class="scrim" id="scrim"></div>
+<div class="layout">
+  <nav class="side" id="side"><ul>
+{{NAV}}
+  </ul></nav>
+  <main id="main">
+<template id="legendTpl">
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>O · HARD</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 70%,var(--cell))"></i>X · NORM</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 40%,var(--cell))"></i>x · SOFT</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 18%,var(--cell));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 55%,transparent)"></i>g · GHOST</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--accent) 0 3px,color-mix(in srgb,var(--accent) 45%,var(--cell)) 3px 6px)"></i>2 3 4 · рэтчет</span>
+      <span><i style="background:color-mix(in srgb,var(--t1) 55%,var(--cell))"></i>нота</span>
+      <span><i style="background:color-mix(in srgb,var(--t1) 28%,var(--cell))"></i>TIE</span>
+      <span class="hint">▶ «Слушать» — простой синтез в браузере, не звук FM-1. Мелодии — в C, в указанном ладу (как KEYS = WHITE).</span>
+    </div>
+    </template>
+{{SECTIONS}}
+  </main>
+</div>
+<script>
+const PATTERNS = {{PATTERNS}};
+document.documentElement.classList.add('js');
+
+/* ---------- theme ---------- */
+(function () {
+  const root = document.documentElement;
+  let saved = null;
+  try { saved = localStorage.getItem('sloop-theme'); } catch (e) {}
+  if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('sloop-theme', root.dataset.theme); } catch (e) {}
+  });
+})();
+
+/* ---------- chapters ---------- */
+const sections = [...document.querySelectorAll('section.chapter')];
+const legendTpl = document.getElementById('legendTpl');
+sections.forEach(s => {
+  if (!s.querySelector('figure.grid-wrap')) return;
+  const h1 = s.querySelector('h1');
+  const lg = legendTpl.content.firstElementChild.cloneNode(true);
+  if (h1) h1.after(lg); else s.prepend(lg);
+});
+const chaps = [...document.querySelectorAll('nav.side li.chap')];
+sections.forEach((s, i) => {
+  const pg = document.createElement('div');
+  pg.className = 'pager';
+  const prev = sections[i - 1], next = sections[i + 1];
+  const name = (sec) => chaps.find(c => c.dataset.sec === sec.id).querySelector('a').textContent;
+  pg.innerHTML = (prev ? `<a href="#${prev.id}"><small>← назад</small>${name(prev)}</a>` : '<span></span>') +
+                 (next ? `<a href="#${next.id}" style="text-align:right"><small>дальше →</small>${name(next)}</a>` : '<span></span>');
+  s.appendChild(pg);
+});
+function route() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  const el = id ? document.getElementById(id) : null;
+  const sec = el ? (el.closest('section.chapter') || sections[0]) : sections[0];
+  sections.forEach(s => s.classList.toggle('shown', s === sec));
+  chaps.forEach(c => c.classList.toggle('active', c.dataset.sec === sec.id));
+  document.body.classList.remove('menu-open');
+  if (el && el !== sec) el.scrollIntoView();
+  else window.scrollTo(0, 0);
+  const a = chaps.find(c => c.dataset.sec === sec.id);
+  if (a) a.scrollIntoView({ block: 'nearest' });
+}
+window.addEventListener('hashchange', route);
+route();
+document.getElementById('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('menu-open'));
+
+/* ---------- audio ---------- */
+let ac = null, out = null, noiseBuf = null, ohat = null;
+function audio() {
+  if (ac) return ac;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.ratio.value = 4;
+  out = ac.createGain(); out.gain.value = 0.7;
+  out.connect(comp); comp.connect(ac.destination);
+  noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return ac;
+}
+function env(g, t, vol, dur, atk = 0.002) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(vol, 0.0002), t + atk);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+function noise(t, dur, vol, type, freq, q = 0.8) {
+  const s = ac.createBufferSource(); s.buffer = noiseBuf;
+  const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = ac.createGain(); env(g, t, vol, dur);
+  s.connect(f); f.connect(g); g.connect(out);
+  s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  return g;
+}
+function tone(t, f0, f1, dur, vol, type = 'sine', bend = 0.06) {
+  const o = ac.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(f1, 20), t + bend);
+  const g = ac.createGain(); env(g, t, vol, dur);
+  o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  return g;
+}
+function choke(t) { if (ohat) { try { ohat.gain.cancelScheduledValues(t); ohat.gain.setTargetAtTime(0.0001, t, 0.01); } catch (e) {} ohat = null; } }
+const DRUM = {
+  1: (t, v) => tone(t, 160, 48, 0.42, v, 'sine', 0.09),
+  2: (t, v) => tone(t, 200, 62, 0.24, v * 0.9, 'sine', 0.05),
+  3: (t, v) => { tone(t, 240, 170, 0.11, v * 0.45, 'triangle', 0.03); noise(t, 0.17, v * 0.7, 'highpass', 1600); },
+  4: (t, v) => { [0, 0.011, 0.022].forEach(o => noise(t + o, 0.02, v * 0.6, 'bandpass', 1300, 1.2)); noise(t + 0.03, 0.16, v * 0.5, 'bandpass', 1200, 1.2); },
+  5: (t, v) => { choke(t); noise(t, 0.045, v * 0.42, 'highpass', 7500); },
+  6: (t, v) => { choke(t); ohat = noise(t, 0.38, v * 0.36, 'highpass', 6500); },
+  7: (t, v) => { choke(t); noise(t, 0.06, v * 0.3, 'highpass', 5000); },
+  8: (t, v) => { tone(t, 1700, 1500, 0.03, v * 0.35, 'square', 0.01); tone(t, 480, 400, 0.05, v * 0.4, 'triangle', 0.01); },
+  9: (t, v) => { tone(t, 330, 250, 0.08, v * 0.35, 'triangle', 0.02); noise(t, 0.12, v * 0.55, 'bandpass', 3200, 0.7); },
+  10: (t, v) => tone(t, 150, 95, 0.36, v * 0.8, 'sine', 0.12),
+  11: (t, v) => tone(t, 230, 155, 0.26, v * 0.75, 'sine', 0.1),
+  12: (t, v) => noise(t, 1.3, v * 0.38, 'highpass', 4200, 0.5),
+  13: (t, v) => { noise(t, 0.55, v * 0.18, 'bandpass', 7800, 1.5); tone(t, 5200, 5100, 0.4, v * 0.05, 'square', 0.1); },
+  14: (t, v) => noise(t, 0.07, v * 0.28, 'highpass', 9000),
+  15: (t, v) => tone(t, 360, 290, 0.2, v * 0.7, 'sine', 0.03),
+  16: (t, v) => { [545, 815].forEach(f => { const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = f; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2; const g = ac.createGain(); env(g, t, v * 0.22, 0.26); o.connect(bp); bp.connect(g); g.connect(out); o.start(t); o.stop(t + 0.3); }); },
+};
+const LV = { g: 0.22, x: 0.5, X: 0.8, O: 1.0, '2': 0.8, '3': 0.8, '4': 0.8 };
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+function synthNote(t, midi, dur, vol, bass, slideTo, slideAt) {
+  const f = ac.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(bass ? 900 : 3200, t); f.frequency.exponentialRampToValueAtTime(bass ? 380 : 1600, t + Math.min(dur, 0.5));
+  f.Q.value = bass ? 3 : 0.7;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+  g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.01, dur - 0.04));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.06);
+  f.connect(g); g.connect(out);
+  const types = bass ? ['sawtooth', 'sine'] : ['triangle', 'square'];
+  const mix = bass ? [0.5, 0.8] : [0.8, 0.12];
+  types.forEach((ty, i) => {
+    const o = ac.createOscillator(); o.type = ty;
+    const fr = mtof(midi) * (bass && i === 1 ? 0.5 : 1);
+    o.frequency.setValueAtTime(fr, t);
+    if (slideTo != null) {
+      o.frequency.setValueAtTime(fr, slideAt - 0.06);
+      o.frequency.exponentialRampToValueAtTime(mtof(slideTo) * (bass && i === 1 ? 0.5 : 1), slideAt);
+    }
+    if (!bass && i === 1) o.detune.value = 7;
+    const og = ac.createGain(); og.gain.value = mix[i];
+    o.connect(og); og.connect(f); o.start(t); o.stop(t + dur + 0.1);
+  });
+}
+
+/* ---------- sequencer ---------- */
+let cur = null;
+function stepDur(p, i) {
+  const base = 60 / p.bpm / p.spb;
+  if ((p.spb === 4 || p.spb === 2) && p.swing > 50) {
+    const s = Math.min(p.swing, 75) / 100;
+    return i % 2 === 0 ? base * 2 * s : base * 2 * (1 - s);
+  }
+  return base;
+}
+function schedule(p, i, t, fill) {
+  if (p.type === 'drum') {
+    const c = p.cond ? p.cond[i] : null;
+    if (c === 'F' && !fill) return;
+    if (c === 'N' && fill) return;
+    const d = stepDur(p, i);
+    for (const ln of Object.keys(p.lanes).map(Number).sort((a, b) => a - b)) {
+      const ch = p.lanes[ln][i];
+      if (!ch || ch === '.' || ch === '-') continue;
+      const v = LV[ch] || 0.8;
+      const n = /[234]/.test(ch) ? +ch : 1;
+      for (let k = 0; k < n; k++) DRUM[ln] && DRUM[ln](t + k * d / n, v);
+    }
+  } else {
+    for (const vc of p.voices) {
+      const m = vc.notes[i];
+      if (typeof m !== 'number') continue;
+      let len = stepDur(p, i), j = (i + 1) % p.len, steps = 1;
+      while (steps < p.len && vc.notes[j] === '-') { len += stepDur(p, j); j = (j + 1) % p.len; steps++; }
+      const fl = vc.flags[i] || '.';
+      let slideTo = null, slideAt = 0;
+      if ((fl === 'S' || fl === 'B') && typeof vc.notes[j] === 'number') {
+        slideTo = vc.notes[j]; slideAt = t + len; len += stepDur(p, j) * 0.9;
+      }
+      const vol = (p.bass ? 0.32 : 0.22) * (fl === 'A' || fl === 'B' ? 1.35 : 1);
+      synthNote(t, m, Math.max(0.05, len * (slideTo != null ? 1 : 0.92)), vol, p.bass, slideTo, slideAt);
+    }
+  }
+}
+function highlight(fig, i) {
+  fig.querySelectorAll('.now').forEach(e => e.classList.remove('now'));
+  if (i == null) return;
+  fig.querySelectorAll(`[data-s="${i}"]`).forEach(e => e.classList.add('now'));
+}
+function stop() {
+  if (!cur) return;
+  clearInterval(cur.timer); cancelAnimationFrame(cur.raf);
+  highlight(cur.fig, null);
+  cur.btn.classList.remove('on'); cur.btn.querySelector('.ico').textContent = '▶'; cur.btn.querySelector('.txt').textContent = 'Слушать';
+  cur = null;
+}
+function start(btn) {
+  const pid = +btn.dataset.pid, p = PATTERNS[pid];
+  const fig = btn.closest('figure');
+  stop(); audio(); ac.resume();
+  const fillBox = fig.querySelector('input[data-fill]');
+  cur = { p, fig, btn, step: 0, next: ac.currentTime + 0.08, queue: [] };
+  btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
+  const me = cur;
+  me.timer = setInterval(() => {
+    while (me.next < ac.currentTime + 0.12) {
+      schedule(p, me.step, me.next, fillBox && fillBox.checked);
+      me.queue.push([me.step, me.next]);
+      me.next += stepDur(p, me.step);
+      me.step = (me.step + 1) % p.len;
+    }
+  }, 25);
+  const draw = () => {
+    if (cur !== me) return;
+    let last = null;
+    while (me.queue.length && me.queue[0][1] <= ac.currentTime) last = me.queue.shift()[0];
+    if (last != null) highlight(fig, last);
+    me.raf = requestAnimationFrame(draw);
+  };
+  me.raf = requestAnimationFrame(draw);
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button.play');
+  if (!btn) return;
+  if (cur && cur.btn === btn) stop(); else start(btn);
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+window.addEventListener('hashchange', stop);
+</script>
+</body>
+</html>
