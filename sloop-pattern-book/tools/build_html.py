@@ -244,8 +244,13 @@ class Book:
         if lang == 'keys':
             mode = o.get('mode', 'notes')
             lit = [int(x) for x in o.get('steps', '').split()]
+            marks = []
+            for tok in o.get('marks', '').split():
+                rng, _, lab = tok.partition(':')
+                a, _, b = rng.partition('-')
+                marks.append((a, b or a, lab.replace('_', ' ')))
             return F.keyboard(self.pairs(o.get('hl', '')), o.get('ghost', '').split(), mode, lit, cap,
-                              play_keys=True)
+                              play_keys=True, marks=marks)
         if lang == 'song':
             return self.song(o, fn)
         if lang == 'chords':

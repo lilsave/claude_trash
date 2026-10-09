@@ -74,7 +74,24 @@ def midi_name(m):
 
 
 # ---------------------------------------------------------------- keyboard
-def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_keys=False):
+def pill(cx, cy, label):
+    """A white badge that grows with its label (1, IV, 4↓, до…)."""
+    w = max(24, 8 * len(str(label)) + 10)
+    return ('<rect class="badge" x="%.1f" y="%d" width="%d" height="24" rx="12"/>'
+            '<text class="bt" x="%d" y="%d">%s</text>' % (cx - w / 2, cy - 12, w, cx, cy + 5, esc(label)))
+
+
+def key_x(name):
+    """The centre of a key in the keyboard picture."""
+    if name in WHITES:
+        return 4 + KW * WHITES.index(name) + KW // 2
+    for b, left, _ in BLACKS:
+        if b == name:
+            return 4 + KW * (left + 1)
+    raise ValueError('no key %s' % name)
+
+
+def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_keys=False, marks=()):
     """The FM-1 keyboard: 11 black keys over 16 white ones, as on the device.
 
     hl: {key name: label} keys to press (label shown in a badge; '' = no badge)
@@ -84,6 +101,23 @@ def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_k
     hl = hl or {}
     W = KW * 16 + 8
     H = 214
+    rows = {}                       # mark rows: brackets under the keys, a new row when they would overlap
+    placed = []
+    for a, b, lab in marks:
+        x1, x2 = sorted((key_x(a), key_x(b)))
+        half = 3.6 * len(lab) + 6         # the label is often wider than its bracket
+        mid = (x1 + x2) / 2
+        e1, e2 = min(x1 - 10, mid - half), max(x2 + 10, mid + half)
+        r = 0
+        while any(rr == r and e1 < px2 and e2 > px1 for rr, px1, px2 in placed):
+            r += 1
+        placed.append((r, e1, e2))
+        rows.setdefault(r, []).append((x1, x2, lab))
+    if mode == 'steps':
+        H = 186                     # no note names under the keys
+    base = H + 8
+    if rows:
+        H += 8 + 30 * len(rows)
     p = ['<svg class="fm1 kbd%s" viewBox="0 0 %d %d" role="img" aria-label="%s">' % (
         ' playable' if play_keys else '', W, H, esc(caption or 'Клавиатура FM-1'))]
     p.append('<rect class="dev" x="0" y="0" width="%d" height="%d" rx="18"/>' % (W, H))
@@ -99,7 +133,7 @@ def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_k
                  '<rect class="slot" x="%d" y="22" width="4" height="26" rx="2"/>'
                  '<text class="lab" x="%d" y="70">%s</text>' % (cls, name, cx - 15, 30, cx - 2, cx, esc(lab)))
         if name in hl and hl[name]:
-            p.append('<circle class="badge" cx="%d" cy="36" r="12"/><text class="bt" x="%d" y="41">%s</text>' % (cx, cx, esc(hl[name])))
+            p.append(pill(cx, 36, hl[name]))
         p.append('</g>')
     # white row
     for i, name in enumerate(WHITES):
@@ -121,7 +155,7 @@ def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_k
         if notes_like and name in hl and hl[name]:
             badge = hl[name]
         if badge:
-            p.append('<circle class="badge" cx="%d" cy="124" r="12"/><text class="bt" x="%d" y="129">%s</text>' % (cx, cx, esc(badge)))
+            p.append(pill(cx, 124, badge))
         p.append('<text class="num" x="%d" y="166">%d</text></g>' % (cx, n))
         if mode == 'drums':
             p.append('<text class="nm dr" x="%d" y="196">%s</text>' % (cx, DRUM_SHORT[i]))
@@ -129,8 +163,14 @@ def keyboard(hl=None, ghost=(), mode='notes', steps_lit=(), caption=None, play_k
         elif mode == 'notes':
             p.append('<text class="nm" x="%d" y="196">%s</text>' % (cx, name))
             p.append('<text class="syl" x="%d" y="209">%s</text>' % (cx, SYL[name[0]]))
-        else:
-            p.append('<text class="nm" x="%d" y="200">%s</text>' % (cx, n))
+
+    for r, items in rows.items():
+        y = base + 30 * r
+        for x1, x2, lab in items:
+            if x1 == x2:
+                x1, x2 = x1 - 10, x2 + 10
+            p.append('<path class="mk" d="M%d %d v-7 H%d v7"/>' % (x1, y, x2))
+            p.append('<text class="mt" x="%d" y="%d">%s</text>' % ((x1 + x2) / 2, y + 17, esc(lab)))
     p.append('</svg>')
     out = ''.join(p)
     if caption:
@@ -183,7 +223,8 @@ def panel(hl=None, caption=None, screen=None):
                                                                          esc('PLAY' if name == 'PLAY' else lab)))
         if on and hl[name]:
             bx, by = (cx + 16, cy - 18) if kind == 'knob' else (cx + 16, cy - 20)
-            p.append('<circle class="badge" cx="%d" cy="%d" r="11"/><text class="bt" x="%d" y="%d">%s</text>' % (bx, by, bx, by + 5, esc(hl[name])))
+            lab = str(hl[name])
+            p.append(pill(bx + max(0, (8 * len(lab) + 10 - 24) // 2), by, lab))
     p.append('</svg>')
     return '<figure class="pic">%s%s</figure>' % (''.join(p), '<figcaption>%s</figcaption>' % caption if caption else '')
 
