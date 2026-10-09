@@ -15,9 +15,22 @@
 | --- | --- | --- | --- | --- | --- |
 | 150 | 808 | PLUGG BASS | GLASS PAD | PLUGG BELL | MAJ |
 
+## Инструменты жанра в твоём банке
+
+Всё есть в твоей SLOOP 2.4. Основной звук — то, с чего начать; запасные дают свой оттенок того же жанра.
+
+- **Ударные:** кит **808** · запасные: TRAP — 1 бочка, 4 хлопок, 5 хэт, 8 рим — и больше почти ничего.
+- **Бас:** **PLUGG BASS** · запасные: 808 BOOM, SUB BASS — мягкая 808, которая скользит между нотами.
+- **Аккорды:** **GLASS PAD** (CHORD 7TH) · запасные: RHODES, TINE EP, SOFT PAD — светлые септаккорды, «облако».
+- **Мелодия:** **PLUGG BELL** · запасные: GLASS BELL, MUSIC BOX, KALIMBA — колокольчик восьмыми, высоко.
+
+**Не бери:** 808 DIRTY, HOOVER, DIRTY B3 — слишком грубо для мечтательного жанра.
+
 ## Послушай целиком
 
 ```loop
+lead_sound=bell
+pad_sound=pad
 title=Плаггнб: 4 такта
 bpm=150
 bars=4
@@ -39,6 +52,7 @@ caption=Трек 2: держи SEL, KNOB 1 → 7TH. Теперь каждая к
 ```
 
 ```chords
+pad_sound=pad
 title=GLASS PAD, CHORD = 7TH: спуск 8 → 7 → 6 → 5
 bpm=150
 kind=7TH
@@ -62,6 +76,7 @@ bars=F4 E4 D4 C4
 ## Фишка 3: колокольчик восьмыми
 
 ```song
+sound=bell
 title=PLUGG BELL
 bpm=150
 notes=E5/ D5/ C5/ G4/ E5/ D5/ C5/ A4/ | D5/ C5/ G4/ E4/ G4/ A4/ C5

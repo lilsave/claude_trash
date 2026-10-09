@@ -246,6 +246,14 @@ class Book:
                 '<span class="ico">▶</span><span class="txt">Слушать</span></button>'
                 '<span class="meta">%s</span>%s</div>' % (pid, html.escape(meta), extra))
 
+    @staticmethod
+    def inst(o, fn):
+        """Browser instruments for an example: piano / electric piano in the course and the school,
+        a plain synth elsewhere; a block names its own with lead_sound= / pad_sound= (sound= for a song)."""
+        teach = fn.startswith(('kurs-', 'shkola-'))
+        return {'lead': o.get('lead_sound') or o.get('sound') or ('piano' if teach else 'lead'),
+                'pad': o.get('pad_sound') or ('epiano' if teach else 'pad')}
+
     def fm1_block(self, lang, lines, fn):
         o = self.opts(lines)
         cap = self.inline(o['caption'], fn) if o.get('caption') else None
@@ -302,7 +310,7 @@ class Book:
         beats = -(-beats // 4) * 4
         pid = len(self.patterns)
         self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [],
-                              'b808': o.get('bass_sound') == '808'})
+                              'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)})
         meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         used = {k: '' for k, _ in notes if k}
@@ -384,7 +392,8 @@ class Book:
             if ',' in hl[k]:
                 hl[k] = hl[k].split(',')[0] + '…'
         pid = len(self.patterns)
-        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': []})
+        self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': [],
+                              'inst': self.inst(o, fn)})
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         meta = '%d BPM · CHORD = %s%s · по такту на аккорд' % (bpm, kind, '' if scale == 'MAJ' else ' · ' + scale)
         kb = F.keyboard(hl, sorted(ghost), 'notes', (), None)
@@ -476,7 +485,7 @@ class Book:
             tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))
         pid = len(self.patterns)
         self.patterns.append({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr,
-                              'b808': o.get('bass_sound') == '808'})
+                              'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)})
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         rows = ''.join('<div class="trk t%d"><label class="tmute"><input type="checkbox" checked data-voice="%s"> '
                        '<span class="tno">%d</span> %s</label>%s</div>' % (n, v, n, html.escape(t), body)

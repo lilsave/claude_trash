@@ -394,8 +394,8 @@ function audio() {
   if (ac) return ac;
   ac = new (window.AudioContext || window.webkitAudioContext)();
   const comp = ac.createDynamicsCompressor();
-  comp.threshold.value = -14; comp.ratio.value = 4;
-  out = ac.createGain(); out.gain.value = 0.7;
+  comp.threshold.value = -12; comp.ratio.value = 12; comp.knee.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
+  out = ac.createGain(); out.gain.value = 0.6;
   out.connect(comp); comp.connect(ac.destination);
   noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
@@ -583,6 +583,62 @@ function sub808(t, midi, dur, vol, slideTo, slideAt) {
   }
   o.connect(g); o.start(t); o.stop(t + dur + 0.12);
 }
+/* instruments for the course and genre examples: a rough idea of the FM-1 preset, not its sound */
+function osc(type, f, t, end, dest, det) {
+  const o = ac.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det;
+  o.connect(dest); o.start(t); o.stop(end); return o;
+}
+function decayEnv(t, vol, dur, tail, release) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+  g.gain.setTargetAtTime(vol * 0.0005, t + 0.01, tail);        // the note dies away on its own...
+  g.gain.setTargetAtTime(0.0001, t + dur, release);              // ...or stops when the key comes up
+  return g;
+}
+function voice(kind, t, midi, dur, vol) {
+  const f = mtof(midi), end = t + dur + 1.2;
+  if (kind === 'piano') {                     // GRAND PNO: hammer attack, bright then darker, long decay
+    const g = decayEnv(t, vol, dur, 0.9, 0.12);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(Math.min(9000, f * 9), t); lp.frequency.setTargetAtTime(Math.min(4000, f * 4), t, 0.4);
+    lp.connect(g); g.connect(out);
+    osc('triangle', f, t, end, lp); 
+    const h = ac.createGain(); h.gain.value = 0.35; h.connect(lp); osc('sine', f * 2, t, end, h, 3);
+    const h3 = ac.createGain(); h3.gain.value = 0.12; h3.connect(lp); osc('sine', f * 3, t, end, h3, -4);
+  } else if (kind === 'epiano') {             // RHODES: round tone with a short metallic tine
+    const g = decayEnv(t, vol * 0.9, dur, 1.6, 0.15); g.connect(out);
+    osc('sine', f, t, end, g);
+    const tine = ac.createGain(); tine.gain.setValueAtTime(vol * 0.5, t); tine.gain.setTargetAtTime(0.0001, t, 0.08);
+    tine.connect(out); osc('sine', f * 4, t, t + 0.6, tine);
+  } else if (kind === 'bell') {               // TRAP BELL, PLUGG BELL, VIBES: inharmonic bell
+    const g = decayEnv(t, vol * 0.6, dur + 0.6, 0.5, 0.4); g.connect(out);
+    osc('sine', f, t, end, g);
+    const p = ac.createGain(); p.gain.setValueAtTime(vol * 0.25, t); p.gain.setTargetAtTime(0.0001, t, 0.15);
+    p.connect(out); osc('sine', f * 2.76, t, t + 0.8, p);
+  } else if (kind === 'pluck') {              // NYLON PICK: plucked string
+    const g = decayEnv(t, vol * 0.5, dur + 0.3, 0.45, 0.2);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(5000, t); lp.frequency.exponentialRampToValueAtTime(700, t + 0.25);
+    lp.connect(g); g.connect(out);
+    osc('sawtooth', f, t, end, lp); osc('triangle', f, t, end, lp, 5);
+  } else if (kind === 'saw' || kind === 'square' || kind === 'strings') {
+    // SUPERSAW (three detuned saws), GAME LEAD (chip square), DARK STR (slow strings)
+    const atk = kind === 'strings' ? 0.12 : 0.006;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.55, t + atk);
+    g.gain.setValueAtTime(vol * 0.55, t + Math.max(atk + 0.01, dur - 0.04));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + (kind === 'strings' ? 0.4 : 0.08));
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = kind === 'square' ? 5000 : 2600;
+    lp.connect(g); g.connect(out);
+    const dets = kind === 'square' ? [0] : [-14, 0, 14];
+    dets.forEach(d => osc(kind === 'square' ? 'square' : 'sawtooth', f, t, t + dur + 0.5, lp, d));
+  } else if (kind === 'pad') {
+    padNote(t, midi, dur * 0.97, vol * 0.18);
+  } else {
+    synthNote(t, midi, Math.max(0.06, dur * 0.9), vol, false, null, 0);
+  }
+}
 function padNote(t, midi, dur, vol) {
   const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1700; f.Q.value = 0.5;
   const g = ac.createGain();
@@ -627,8 +683,9 @@ function startEv(btn, p, fig) {
           const ms = Array.isArray(e.m) ? e.m : [e.m];
           const dur = e.d * sb;
           ms.forEach(m => {
-            if (e.v === 'pad') padNote(t, m, dur * 0.97, 0.09);
-            else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.5, e.s, t + dur);
+            if (e.v === 'pad') voice((p.inst && p.inst.pad) || 'pad', t, m, dur * 0.97, 0.3);
+            else if (e.v === 'lead' && p.inst && p.inst.lead && e.s == null) voice(p.inst.lead, t, m, dur, 0.42);
+            else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4, e.s, t + dur);
             else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
             else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
           });
@@ -654,7 +711,7 @@ document.addEventListener('pointerdown', e => {
   if (!key) return;
   audio(); ac.resume();
   const t = ac.currentTime + 0.01;
-  synthNote(t, KEYMIDI(key.dataset.k), 0.45, 0.42, false, null, 0);
+  voice('piano', t, KEYMIDI(key.dataset.k), 0.6, 0.42);
   key.classList.add('lit');
   setTimeout(() => key.classList.remove('lit'), 320);
 });

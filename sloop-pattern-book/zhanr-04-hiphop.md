@@ -15,9 +15,22 @@
 | --- | --- | --- | --- | --- | --- |
 | 88 | BOOMBAP | UP BASS | DUSTY PNO | VIBES | DOR |
 
+## Инструменты жанра в твоём банке
+
+Всё есть в твоей SLOOP 2.4. Основной звук — то, с чего начать; запасные дают свой оттенок того же жанра.
+
+- **Ударные:** кит **BOOMBAP** · запасные: DUST, VINTAGE, LO-FI — 1 бочка, 3 малый с призраками, 5 хэт, 6 открытый.
+- **Бас:** **UP BASS** · запасные: DEEP BASS — контрабас по ударам бочки.
+- **«Сэмпл»-аккорды:** **DUSTY PNO** (CHORD 7TH) · запасные: RHODES, LOFI KEYS, JAZZ ORGAN — два джазовых аккорда по кругу.
+- **Мелодия и краски:** **VIBES** · запасные: HORN STAB, LOFI FLUTE, SCRATCH — короткие фразы между словами.
+
+**Не бери:** 808 SLIDE, SUPERSAW, HOOVER — это уже трэп и рейв, а не бум-бэп.
+
 ## Послушай целиком
 
 ```loop
+lead_sound=bell
+pad_sound=piano
 title=Хип-хоп 2020-х: 2 такта со свингом
 bpm=88
 bars=2
@@ -51,6 +64,7 @@ caption=SEQ + KNOB 3 — свинг трека 58 %. SEQ + шаг + KNOB 2 — G
 ## Фишка 2: два джазовых аккорда
 
 ```chords
+pad_sound=piano
 title=DUSTY PNO, CHORD = 7TH, лад DOR: i7 – IV7
 bpm=88
 scale=DOR
