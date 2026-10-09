@@ -781,6 +781,11 @@ def build(root, out):
               .replace('{{PATTERNS}}', json.dumps(book.patterns, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/'))
     open(out, 'w', encoding='utf-8').write(page)
     print('patterns', len(book.patterns), 'bytes', len(page.encode('utf-8')))
+    # the same book for publishing as a link: the publisher wraps it in its own document
+    head = re.search(r'<head>(.*?)</head>', page, re.S).group(1)
+    head = re.sub(r'<meta[^>]*>\s*', '', head)
+    body = re.search(r'<body>(.*)</body>', page, re.S).group(1)
+    open(os.path.join(os.path.dirname(out), 'sloop-book-link.html'), 'w', encoding='utf-8').write(head.strip() + '\n' + body.strip() + '\n')
 
 
 if __name__ == '__main__':

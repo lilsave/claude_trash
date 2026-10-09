@@ -53,7 +53,7 @@ a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2
 
 /* ---------- layout ---------- */
 .topbar {
-  position: sticky; top: 0; z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px;
   padding: 0 16px; background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
 }
@@ -284,6 +284,16 @@ label.done:has(input:checked) { border-style: solid; border-color: var(--t2); ba
 nav.side li.chap.done > a::after { content: " ✓"; color: var(--t2); font-weight: 800; }
 nav.side li.chap.active.done > a::after { color: var(--accent-fg); }
 
+/* ---------- no sound notice ---------- */
+.nosound {
+  margin: 0; padding: 10px 16px;
+  background: var(--accent); color: var(--accent-fg); font-size: 14.5px; line-height: 1.45; font-weight: 600;
+}
+#noSound { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 19; }
+.nosound button { margin-left: 8px; border: 0; border-radius: 6px; padding: 3px 10px; font: inherit; font-size: 13px;
+  background: var(--accent-fg); color: var(--accent); cursor: pointer; }
+[hidden] { display: none !important; }
+
 /* ---------- mobile ---------- */
 @media (max-width: 900px) {
   #menuBtn { display: inline-block; }
@@ -315,6 +325,8 @@ nav.side li.chap.active.done > a::after { color: var(--accent-fg); }
   <button class="iconbtn" id="themeBtn" aria-label="Сменить тему" title="Светлая / тёмная тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
 </header>
 <div class="scrim" id="scrim"></div>
+<noscript><div class="nosound">Ты смотришь книгу в режиме просмотра файла: картинки и ноты на месте, а звук и кнопки «Слушать» здесь не работают. Открой файл в браузере — на Android в Chrome, на iPhone по ссылке на книгу в Safari (см. «Как открыть в самолёте» на обложке).</div></noscript>
+<div class="nosound" id="noSound" hidden>Звук не запустился. Так бывает в просмотре файлов внутри приложений. Открой книгу в браузере: на Android — файл в Chrome, на iPhone — ссылку на книгу в Safari. Проверь громкость телефона. <button type="button" id="noSoundClose">Понятно</button></div>
 <div class="layout">
   <nav class="side" id="side"><ul>
 {{NAV}}
@@ -385,6 +397,7 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 route();
+document.getElementById('noSoundClose').addEventListener('click', () => { document.getElementById('noSound').hidden = true; });
 document.getElementById('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu-open'));
 document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('menu-open'));
 
@@ -392,6 +405,7 @@ document.getElementById('scrim').addEventListener('click', () => document.body.c
 let ac = null, out = null, noiseBuf = null, ohat = null;
 function audio() {
   if (ac) return ac;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone: play with the silent switch on
   ac = new (window.AudioContext || window.webkitAudioContext)();
   const comp = ac.createDynamicsCompressor();
   comp.threshold.value = -12; comp.ratio.value = 12; comp.knee.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
@@ -521,10 +535,17 @@ function stop() {
   cur.btn.classList.remove('on'); cur.btn.querySelector('.ico').textContent = '▶'; cur.btn.querySelector('.txt').textContent = 'Слушать';
   cur = null;
 }
+function soundCheck() {
+  setTimeout(() => {
+    if (ac && ac.state !== 'running') document.getElementById('noSound').hidden = false;
+  }, 900);
+}
 function start(btn) {
   const pid = +btn.dataset.pid, p = PATTERNS[pid];
   const fig = btn.closest('figure');
-  stop(); audio(); ac.resume();
+  stop();
+  try { audio(); ac.resume(); } catch (e) { document.getElementById('noSound').hidden = false; return; }
+  soundCheck();
   if (p.type === 'ev') {
     startEv(btn, p, fig);
     btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
