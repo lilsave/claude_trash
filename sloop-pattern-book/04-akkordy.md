@@ -163,12 +163,12 @@ R12 антиц.  X---|----|----|---X    следующий аккорд «ран
 | Лоу-фай, нео-соул | RHODES, WURLI, DUSTY PNO, LOFI KEYS, VIBE HAZE, SOFT KEYS |
 | Хаус, гараж | M1 PIANO, HOUSE ORGN, DX RHODES · стабы: MIN7 STAB, DUB CHORD (CHORD = OFF) |
 | Трэп, R&B | TRAP BELL, PLUGG BELL, GLASS PAD, SOUL OOH, CHOIR AAH |
-| Госпел, соул | GOSPEL, SOUL ORGAN, GRAND PNO |
+| Госпел, соул | GOSPEL, SOUL ORGAN, DRAWBARS, GRAND PNO |
 | Джаз | JAZZ ORGAN, GRAND PNO, VIBES, TINE EP |
-| Синтвейв, поп | SAW PAD, WARM PAD, SUPERSAW, SYN BRASS, CZ STRING |
+| Синтвейв, поп | SAW PAD, WARM PAD, SUPERSAW, SYN BRASS, CZ STRING · стабы: RESO PLUCK |
 | Эмбиент | ATMOS PAD, LOFI CLOUD, GLASS PAD, SOFT PAD, DARK STR |
 | Регги, фанк | CLAV, SOUL ORGAN, DIRTY B3 |
-| Афро, латино | AFRO KEYS, NYLON PICK, KALIMBA, MARIMBA |
+| Афро, латино | AFRO KEYS, NYLON PICK, KALIMBA, MARIMBA, WOOD BARS |
 | Рок, панк (POWER) | FAT BASS на октаву выше, SYNC LEAD, SAW PAD |
 
 ---
