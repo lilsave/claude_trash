@@ -246,31 +246,32 @@ def panel(hl=None, caption=None, screen=None):
 
 # ---------------------------------------------------------------- notes / staff
 def parse_notes_ex(text):
-    """'E4 E4 F4 G4 | G4- E4. D4/ C4*3 G3*4~ r' -> [(key or None, beats, slide)], bar lines ignored.
+    """'E4 E4 F4 G4 | G4- E4. D4/ C4*3 G3*4~ r' -> [(key or None, beats, slide, articulation)], bar lines ignored.
 
-    '-' adds a beat, '/' halves, '.' adds half (dotted), '*N' is N sixteenth steps,
-    '~' slides into the next note (the 808 glide), 'r' is a rest."""
+    '-' adds a beat, '/' halves, '.' adds half (dotted), '*N' is N sixteenth steps, '*Nt' N triplet
+    eighths (a third of a beat each: DIV 8T on the FM-1), '~' slides into the next note (the 808 glide),
+    '!' accent (ACC), "'" short (a low GATE), 'r' is a rest."""
     out = []
     for tok in text.split():
         if tok == '|':
             continue
-        m = re.fullmatch(r'([A-G]#?\d|r)(?:\*(\d+))?(-*)(/?)(\.?)(~?)', tok)
+        m = re.fullmatch(r"([A-G]#?\d|r)(?:\*(\d+)(t?))?(-*)(/?)(\.?)(~?)(!?)('?)", tok)
         if not m:
             raise ValueError('bad note token %r' % tok)
         if m.group(2):
-            beats = int(m.group(2)) / 4
+            beats = int(m.group(2)) / (3 if m.group(3) else 4)
         else:
-            beats = 1 + len(m.group(3))
-            if m.group(4):
-                beats = 0.5
+            beats = 1 + len(m.group(4))
             if m.group(5):
+                beats = 0.5
+            if m.group(6):
                 beats *= 1.5
-        out.append((None if m.group(1) == 'r' else m.group(1), beats, bool(m.group(6))))
+        out.append((None if m.group(1) == 'r' else m.group(1), beats, bool(m.group(7)), m.group(8) + m.group(9)))
     return out
 
 
 def parse_notes(text):
-    return [(k, b) for k, b, _ in parse_notes_ex(text)]
+    return [(k, b) for k, b, *_ in parse_notes_ex(text)]
 
 
 def staff(notes, per_line=2, first_index=0):

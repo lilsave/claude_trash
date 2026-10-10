@@ -322,23 +322,23 @@ class Book:
         return t
 
     def song_events(self, notes, scale, voice, t0=0.0, swing=50):
-        """notes: [(key, beats)] or [(key, beats, slide)] -> player events
-        [time, beats, midi, voice, keys to light, note index, slide-to midi]"""
+        """notes: [(key, beats, slide, articulation)] -> player events
+        [time, beats, midi, voice, keys to light, note index, slide-to midi, articulation]"""
         def mid(k):
             m = F.white_midi(k, scale) if '#' not in k else F.midi(k)
             return m - 24 if voice == 'bass' else m
         ev, t = [], t0
-        notes = [n if len(n) == 3 else (n[0], n[1], False) for n in notes]
-        for i, (k, b, sl) in enumerate(notes):
+        notes = [tuple(n) + (False, '')[len(n) - 2:] for n in notes]
+        for i, (k, b, sl, art) in enumerate(notes):
             if k is not None:
                 nxt = notes[i + 1][0] if i + 1 < len(notes) else None
-                ev.append([self.swung(t, swing), b, mid(k), voice, [k], i, mid(nxt) if sl and nxt else None])
+                ev.append([self.swung(t, swing), b, mid(k), voice, [k], i, mid(nxt) if sl and nxt else None, art])
             t += b
         return ev, t - t0
 
     def song(self, o, fn):
         notes_ex = F.parse_notes_ex(o['notes'])
-        notes = [(k, b) for k, b, _ in notes_ex]
+        notes = [(k, b) for k, b, *_ in notes_ex]
         scale = o.get('scale', 'MAJ')
         voice = o.get('voice', 'lead')
         bpm = int(o.get('bpm', 90))
@@ -541,7 +541,7 @@ class Book:
             tracks.append(('pad', 2, 'Аккорды (CHORD = %s)' % o.get('kind', 'TRIAD'), '<div class="ccards">%s</div>' % ''.join(cards)))
         if o.get('bass'):
             notes_ex = F.parse_notes_ex(o['bass'])
-            notes = [(k, b) for k, b, _ in notes_ex]
+            notes = [(k, b) for k, b, *_ in notes_ex]
             e, tot = self.song_events(notes_ex, scale, 'bass', swing=swing)
             e = self.fill_loop(e, tot, beats, 'bass', fn)
             for x in e:
@@ -550,7 +550,7 @@ class Book:
             tracks.append(('bass', 1, 'Бас', F.chips(notes, scale).replace(' data-i="', ' data-x="')))
         if o.get('melody'):
             notes_ex = F.parse_notes_ex(o['melody'])
-            notes = [(k, b) for k, b, _ in notes_ex]
+            notes = [(k, b) for k, b, *_ in notes_ex]
             e, tot = self.song_events(notes_ex, scale, 'lead', swing=swing)
             self.octave(e, o)
             e = self.fill_loop(e, tot, beats, 'melody', fn)
