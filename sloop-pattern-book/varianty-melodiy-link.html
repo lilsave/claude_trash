@@ -1,0 +1,998 @@
+<title>Варианты мелодий SLOOP</title>
+<style>
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --surface-2: #efece4;
+  --fg: #1d1b18;
+  --muted: #6b665c;
+  --border: #dcd7cc;
+  --accent: #e8711c;
+  --accent-fg: #ffffff;
+  --link: #b4520a;
+  --code-bg: #ece8de;
+  --t1: #2f7fd8; --t2: #2e9e5b; --t3: #c99a06; --t4: #e8711c;
+  --cell: #e9e5db;
+  --cell-beat: #e0dbcf;
+  --now: #1d1b18;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141311; --surface: #1d1c19; --surface-2: #26241f; --fg: #ece8e0; --muted: #a39d90;
+    --border: #36332c; --accent: #ff8a3d; --accent-fg: #1a1209; --link: #ffa868; --code-bg: #2a2823;
+    --t1: #5aa2ff; --t2: #4cc77f; --t3: #f0c430; --t4: #ff8a3d;
+    --cell: #2a2823; --cell-beat: #322f29; --now: #ece8e0;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141311; --surface: #1d1c19; --surface-2: #26241f; --fg: #ece8e0; --muted: #a39d90;
+  --border: #36332c; --accent: #ff8a3d; --accent-fg: #1a1209; --link: #ffa868; --code-bg: #2a2823;
+  --t1: #5aa2ff; --t2: #4cc77f; --t3: #f0c430; --t4: #ff8a3d;
+  --cell: #2a2823; --cell-beat: #322f29; --now: #ece8e0;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.mono, code, pre, .grid { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+/* ---------- layout ---------- */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.brand .bars { display: inline-flex; gap: 3px; }
+.brand .bars i { width: 5px; height: 18px; border-radius: 2px; display: block; }
+.brand .bars i:nth-child(1) { background: var(--t1); } .brand .bars i:nth-child(2) { background: var(--t2); }
+.brand .bars i:nth-child(3) { background: var(--t3); } .brand .bars i:nth-child(4) { background: var(--t4); }
+.brand small { font-weight: 500; color: var(--muted); }
+.spacer { flex: 1; }
+.iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--fg); border-radius: 8px;
+  height: 36px; min-width: 36px; padding: 0 10px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.iconbtn:hover { border-color: var(--accent); }
+#menuBtn { display: none; }
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+nav.side {
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 20px 12px 40px 16px;
+  border-right: 1px solid var(--border);
+}
+nav.side ul { list-style: none; margin: 0; padding: 0; }
+nav.side li.part {
+  margin: 18px 8px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700;
+}
+nav.side li.part:first-child { margin-top: 0; }
+nav.side li.chap > a {
+  display: block; padding: 7px 10px; border-radius: 8px; color: var(--fg); text-decoration: none; font-size: 15px;
+}
+nav.side li.chap > a:hover { background: var(--surface-2); }
+nav.side li.chap.active > a { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+nav.side ul.sub { display: none; margin: 4px 0 8px 10px; border-left: 2px solid var(--border); }
+nav.side li.chap.active ul.sub { display: block; }
+nav.side ul.sub a {
+  display: block; padding: 4px 10px; font-size: 13.5px; line-height: 1.35; color: var(--muted); text-decoration: none;
+}
+nav.side ul.sub a:hover { color: var(--fg); }
+main { min-width: 0; padding: 28px 40px 80px; }
+section.chapter { max-width: 900px; }
+.js section.chapter { display: none; }
+.js section.chapter.shown { display: block; }
+
+/* ---------- typography ---------- */
+h1 { font-size: 34px; line-height: 1.2; margin: 8px 0 18px; letter-spacing: -.01em; }
+h2 { font-size: 25px; line-height: 1.25; margin: 40px 0 12px; padding-top: 8px; }
+h3 { font-size: 19px; line-height: 1.3; margin: 30px 0 8px; }
+h4 { font-size: 16px; margin: 22px 0 6px; }
+h1, h2, h3 { text-wrap: balance; }
+p, li { max-width: 72ch; }
+hr { border: 0; border-top: 1px solid var(--border); margin: 28px 0; }
+code { background: var(--code-bg); padding: .08em .35em; border-radius: 5px; font-size: .9em; }
+pre {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font-size: 14px; line-height: 1.45;
+}
+blockquote {
+  margin: 18px 0; padding: 10px 16px; border-left: 4px solid var(--accent); background: var(--surface);
+  border-radius: 0 10px 10px 0; box-shadow: var(--shadow);
+}
+blockquote p { margin: 6px 0; }
+.table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.table-wrap table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+.table-wrap th, .table-wrap td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table-wrap thead th { background: var(--surface-2); font-weight: 650; white-space: nowrap; }
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+
+/* ---------- grids ---------- */
+figure.grid-wrap {
+  margin: 16px 0 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.grid-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+button.play {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 12px; border-radius: 999px;
+  border: 0; background: var(--accent); color: var(--accent-fg); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer;
+}
+button.play .ico { font-size: 12px; width: 12px; text-align: center; }
+button.play.on { background: var(--fg); color: var(--bg); }
+.grid-bar .meta { color: var(--muted); font-size: 13.5px; }
+.grid-bar .aud { font: 600 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; color: var(--fg); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; white-space: nowrap; }
+.grid-bar .fill { font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.grid-scroll { overflow-x: auto; padding: 10px 12px 12px; }
+table.grid { border-collapse: separate; border-spacing: 2px; font-size: 12px; }
+table.grid + table.grid { margin-top: 10px; }
+table.grid caption { text-align: left; font-weight: 650; color: var(--muted); padding: 0 0 4px 2px; font-family: inherit; }
+table.grid th.lab {
+  position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; font-weight: 600;
+  padding: 0 10px 0 2px; white-space: nowrap; min-width: 92px;
+}
+table.grid th.lab .ln {
+  display: inline-block; min-width: 22px; padding: 0 4px; border-radius: 5px; background: color-mix(in srgb, var(--t4) 22%, transparent);
+  color: var(--fg); text-align: center; font-weight: 700;
+}
+table.grid th.h { color: var(--muted); font-weight: 500; text-align: center; height: 18px; }
+table.grid th.h.beat { color: var(--fg); font-weight: 700; }
+table.grid .gs { box-shadow: -3px 0 0 -1px var(--bg); }
+table.drum td.c { width: 26px; min-width: 26px; height: 26px; border-radius: 5px; background: var(--cell); text-align: center; font-weight: 700; color: var(--fg); }
+table.drum td.c.v-O { background: var(--accent); color: var(--accent-fg); }
+table.drum td.c.v-X { background: color-mix(in srgb, var(--accent) 70%, var(--cell)); color: var(--accent-fg); }
+table.drum td.c.v-x { background: color-mix(in srgb, var(--accent) 40%, var(--cell)); }
+table.drum td.c.v-g { background: color-mix(in srgb, var(--accent) 18%, var(--cell)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+table.drum td.c.v-r { background: repeating-linear-gradient(90deg, var(--accent) 0 3px, color-mix(in srgb, var(--accent) 45%, var(--cell)) 3px 6px); color: var(--accent-fg); text-shadow: 0 0 3px rgba(0,0,0,.5); }
+table.drum td.c.v-t { background: color-mix(in srgb, var(--t1) 35%, var(--cell)); }
+table.drum td.c.v-F { background: color-mix(in srgb, var(--t2) 45%, var(--cell)); }
+table.drum td.c.v-N { background: color-mix(in srgb, #d23c3c 40%, var(--cell)); }
+table.drum.mini td.c { width: 15px; min-width: 15px; height: 17px; border-radius: 3px; font-size: 9px; }
+table.drum.mini th.lab { min-width: 0; font-size: 11px; padding-right: 6px; }
+table.drum.mini th.lab .ln { min-width: 16px; font-size: 10px; }
+table.drum.mini { border-spacing: 1.5px; }
+table.drum td.com { padding-left: 10px; color: var(--muted); white-space: nowrap; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+table.mel td.m { min-width: 30px; height: 28px; border-radius: 5px; background: var(--cell); text-align: center; font-weight: 700; padding: 0 2px; }
+table.mel td.note { background: color-mix(in srgb, var(--t1) 55%, var(--cell)); color: var(--fg); }
+table.mel td.tie { background: color-mix(in srgb, var(--t1) 28%, var(--cell)); }
+table.mel tr.flagrow td.m { height: 18px; background: transparent; color: var(--accent); font-size: 11px; }
+table.grid td.now, table.grid th.now { outline: 2px solid var(--now); outline-offset: -1px; }
+table.grid th.h.now { color: var(--accent); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13.5px; color: var(--muted); margin: 10px 0 18px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .hint { flex-basis: 100%; font-size: 12.5px; }
+.legend i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+
+.note-audio { font-size: 13.5px; color: var(--muted); border: 1px dashed var(--border); border-radius: 10px; padding: 8px 12px; margin: 0 0 22px; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--border); }
+.pager a { display: block; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; text-decoration: none; background: var(--surface); max-width: 48%; }
+.pager a small { display: block; color: var(--muted); font-size: 12px; }
+
+
+/* ---------- course: FM-1 pictures ---------- */
+figure.pic { margin: 14px 0 18px; }
+figure.pic figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+svg.fm1 { width: 100%; height: auto; display: block; }
+svg.fm1 .dev { fill: #e8721f; }
+svg.fm1 text { text-anchor: middle; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+svg.kbd .key rect:first-child { fill: #8c3b25; }
+svg.kbd .key .slot { fill: #3e170d; }
+svg.kbd .key.mark .slot { fill: #8ad4ff; }
+svg.kbd .key.on rect:first-child { fill: #1f7fe0; }
+svg.kbd .key.on .slot { fill: #d8f0ff; }
+svg.kbd .key.ghost rect:first-child { stroke: #1f7fe0; stroke-width: 3.5; stroke-dasharray: 6 4; }
+svg.kbd .key.lit rect:first-child { fill: #ffe066; }
+svg.kbd .key.lit .slot { fill: #fff; }
+svg.kbd .key.lit text { fill: #3e170d; }
+svg.kbd .lab { fill: #f6cdb7; font-size: 9.5px; font-weight: 700; }
+svg.kbd .num { fill: #f8dccd; font-size: 14px; font-weight: 800; }
+svg.kbd .nm { fill: #3a1408; font-size: 13px; font-weight: 800; }
+svg.kbd .nm.dr { font-size: 11px; }
+svg.kbd .syl { fill: #5b2312; font-size: 11px; }
+svg.kbd .syl.dr { font-size: 9.5px; }
+svg.fm1 .badge { fill: #fff; }
+svg.kbd .mk { fill: none; stroke: #3a1408; stroke-width: 2.2; stroke-linejoin: round; }
+svg.kbd .mt { fill: #3a1408; font-size: 12px; font-weight: 800; }
+svg.fm1 .bt { fill: #0f4f9e; font-size: 13px; font-weight: 800; }
+svg.kbd.playable .key { cursor: pointer; }
+svg.panel .scr { fill: #0d0f12; }
+svg.panel .st { fill: #9fe6ff; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; text-anchor: start; }
+svg.panel .pad { fill: #a24426; }
+svg.panel .ctl.knob circle { fill: #1c1b1a; stroke: #4a2416; stroke-width: 4; }
+svg.panel .ctl.knob line { stroke: #e9e2da; stroke-width: 3; stroke-linecap: round; }
+svg.panel .cl { fill: #fff2e6; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; }
+svg.panel .ctl.btn rect { fill: #8c3b25; }
+svg.panel .bl { fill: #f7d6c4; font-size: 11px; font-weight: 800; }
+svg.panel .bl.small { font-size: 8.5px; }
+svg.panel .ctl.on rect, svg.panel .ctl.on circle { stroke: #6cc6ff; stroke-width: 5; }
+svg.panel .ctl.btn.on rect { fill: #1f7fe0; }
+svg.panel .ctl.btn.on .bl { fill: #fff; }
+
+figure.course {
+  margin: 16px 0 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+figure.course > figure.pic, figure.course > .staff-wrap, figure.course > .chips, figure.course > .ccards,
+figure.course > details, figure.course > .cnote, figure.course > .trk { margin-left: 12px; margin-right: 12px; }
+.ctitle { font-weight: 700; font-size: 16.5px; padding: 12px 12px 0; }
+.cnote { font-size: 14px; color: var(--muted); margin-top: 4px; margin-bottom: 14px; }
+.staff-wrap { overflow-x: auto; padding: 6px 0 0; }
+svg.staff { width: 100%; max-width: 560px; height: auto; display: block; }
+svg.staff + svg.staff { margin-top: 2px; }
+svg.staff .sl { stroke: var(--fg); stroke-opacity: .55; stroke-width: 1.2; }
+svg.staff .bar { stroke: var(--fg); stroke-opacity: .7; stroke-width: 1.4; }
+svg.staff .hf { fill: var(--fg); }
+svg.staff .hh { fill: var(--surface); stroke: var(--fg); stroke-width: 1.8; }
+svg.staff .stem, svg.staff .flag { stroke: var(--fg); stroke-width: 1.6; fill: none; }
+svg.staff .dot { fill: var(--fg); }
+svg.staff .rest { fill: var(--muted); }
+svg.staff .ts { font: 800 17px -apple-system, "Segoe UI", sans-serif; fill: var(--fg); text-anchor: middle; }
+svg.staff .kn { font: 800 14px -apple-system, "Segoe UI", sans-serif; fill: var(--accent); text-anchor: middle; }
+svg.staff .sy { font: 11px -apple-system, "Segoe UI", sans-serif; fill: var(--muted); text-anchor: middle; }
+svg.staff .lg { font: 10px -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+svg.staff .nt.lit .hf, svg.staff .nt.lit .hh { fill: var(--accent); stroke: var(--accent); }
+svg.staff .kn.lit { fill: var(--fg); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px 0; padding: 10px 0 4px; }
+.cbar { display: inline-flex; gap: 4px; padding: 0 8px; border-left: 2px solid var(--border); }
+.chip {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 34px; width: calc(var(--w) * 30px + 6px); height: 46px; border-radius: 8px;
+  background: color-mix(in srgb, var(--t1) 22%, var(--surface-2)); line-height: 1.1;
+}
+.chip b { font-size: 16px; } .chip i { font-style: normal; font-size: 11px; color: var(--muted); }
+.chip.rest { background: transparent; border: 1px dashed var(--border); font-size: 11px; color: var(--muted); }
+.chip.lit { background: var(--accent); color: var(--accent-fg); } .chip.lit i { color: var(--accent-fg); }
+.ccards { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0 2px; }
+.ccard {
+  display: inline-flex; flex-direction: column; align-items: center; min-width: 64px; padding: 6px 10px 7px;
+  border-radius: 10px; background: var(--surface-2); line-height: 1.2; border: 2px solid transparent;
+}
+.ccard small { color: var(--muted); font-size: 11px; } .ccard b { font-size: 16px; }
+.ccard b em { font-style: normal; color: var(--t1); font-size: 13px; margin-left: 2px; }
+.ccard span { font-weight: 600; } .ccard i { font-style: normal; color: var(--accent); font-weight: 800; }
+.ccard.lit { border-color: var(--accent); }
+details.steps { margin-top: 6px; margin-bottom: 12px; }
+details.steps summary { cursor: pointer; font-size: 14px; color: var(--link); padding: 4px 0; }
+details.steps .grid-scroll { padding: 6px 0 0; }
+.trk { padding: 10px 0; border-top: 1px solid var(--border); }
+.trk .grid-scroll { padding: 6px 0 0; }
+.tmute { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; cursor: pointer; }
+.tmute input { width: 18px; height: 18px; accent-color: var(--accent); }
+.tno { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 800; }
+.trk.t1 .tno { background: var(--t1); } .trk.t2 .tno { background: var(--t2); }
+.trk.t3 .tno { background: var(--t3); } .trk.t4 .tno { background: var(--t4); }
+label.done {
+  display: flex; align-items: center; gap: 12px; margin: 28px 0 8px; padding: 14px 16px; border-radius: 12px;
+  border: 2px dashed var(--border); font-weight: 700; cursor: pointer; max-width: 420px;
+}
+label.done input { width: 22px; height: 22px; accent-color: var(--t2); }
+label.done:has(input:checked) { border-style: solid; border-color: var(--t2); background: color-mix(in srgb, var(--t2) 12%, var(--surface)); }
+nav.side li.chap.done > a::after { content: " ✓"; color: var(--t2); font-weight: 800; }
+nav.side li.chap.active.done > a::after { color: var(--accent-fg); }
+
+/* ---------- no sound notice ---------- */
+.nosound {
+  margin: 0; padding: 10px 16px;
+  background: var(--accent); color: var(--accent-fg); font-size: 14.5px; line-height: 1.45; font-weight: 600;
+}
+#noSound { position: sticky; top: calc(56px + env(safe-area-inset-top, 0px)); z-index: 19; }
+.nosound button { margin-left: 8px; border: 0; border-radius: 6px; padding: 3px 10px; font: inherit; font-size: 13px;
+  background: var(--accent-fg); color: var(--accent); cursor: pointer; }
+[hidden] { display: none !important; }
+
+/* ---------- mobile ---------- */
+@media (max-width: 900px) {
+  #menuBtn { display: inline-block; }
+  .layout { display: block; }
+  nav.side {
+    position: fixed; z-index: 30; top: 56px; left: 0; width: min(320px, 86vw); height: calc(100vh - 56px);
+    background: var(--bg); transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow);
+  }
+  body.menu-open nav.side { transform: none; }
+  body.menu-open .scrim { display: block; }
+  .scrim { display: none; position: fixed; inset: 56px 0 0 0; background: rgba(0,0,0,.35); z-index: 25; }
+  main { padding: 20px 16px 64px; }
+  h1 { font-size: 27px; } h2 { font-size: 22px; } h3 { font-size: 18px; }
+  .brand small { display: none; }
+}
+@media print {
+  .topbar, nav.side, .grid-bar, .pager { display: none !important; }
+  .layout { display: block; }
+  .js section.chapter { display: block !important; break-before: page; }
+  figure.grid-wrap, .table-wrap { box-shadow: none; break-inside: avoid; }
+}
+</style>
+<header class="topbar">
+  <button class="iconbtn" id="menuBtn" aria-label="Меню">☰</button>
+  <div class="brand"><span class="bars"><i></i><i></i><i></i><i></i></span>SLOOP 2.5 <small>· книга партий и нотная грамота</small></div>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="themeBtn" aria-label="Сменить тему" title="Светлая / тёмная тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+<div class="scrim" id="scrim"></div>
+<noscript><div class="nosound">Ты смотришь книгу в режиме просмотра файла: картинки и ноты на месте, а звук и кнопки «Слушать» здесь не работают. Слушай примеры из аудио-пакета: код рядом с кнопкой (например, ♪ К02-1) — это имя файла в архиве sloop-audio.zip. Или открой книгу в браузере: на Android в Chrome, на iPhone по ссылке в Safari (см. «Как открыть в самолёте» на обложке).</div></noscript>
+<div class="nosound" id="noSound" hidden>Звук не запустился. Так бывает в просмотре файлов внутри приложений. Послушай этот пример в аудио-пакете: файл с кодом, который стоит рядом с кнопкой. Или открой книгу в браузере: на Android — файл в Chrome, на iPhone — ссылку в Safari. Проверь громкость телефона. <button type="button" id="noSoundClose">Понятно</button></div>
+<div class="layout">
+  <nav class="side" id="side"><ul>
+<li class="part">Варианты</li>
+<li class="chap" data-sec="ch-draft-varianty"><a href="#ch-draft-varianty">Варианты мелодий</a><ul class="sub"><li><a href="#draft-varianty--трэп--как-у-lil-pump">Трэп — как у Lil Pump</a></li><li><a href="#draft-varianty--эмо-рэп--как-у-lil-peep">Эмо-рэп — как у Lil Peep</a></li><li><a href="#draft-varianty--дрилл--как-у-chief-keef-и-central-cee">Дрилл — как у Chief Keef и Central Cee</a></li></ul></li>
+  </ul></nav>
+  <main id="main">
+<template id="legendTpl">
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>O · HARD</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 70%,var(--cell))"></i>X · NORM</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 40%,var(--cell))"></i>x · SOFT</span>
+      <span><i style="background:color-mix(in srgb,var(--accent) 18%,var(--cell));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 55%,transparent)"></i>g · GHOST</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--accent) 0 3px,color-mix(in srgb,var(--accent) 45%,var(--cell)) 3px 6px)"></i>2 3 4 · рэтчет</span>
+      <span><i style="background:color-mix(in srgb,var(--t1) 55%,var(--cell))"></i>нота</span>
+      <span><i style="background:color-mix(in srgb,var(--t1) 28%,var(--cell))"></i>TIE</span>
+      <span class="hint">▶ «Слушать» — простой синтез в браузере, не звук FM-1. Мелодии — в C, в указанном ладу (как KEYS = WHITE).</span>
+    </div>
+    </template>
+<section class="chapter" id="ch-draft-varianty" data-file="draft-varianty.md"><h1 id="draft-varianty--варианты-мелодий-выбери-что-звучит-как-жанр">Варианты мелодий: выбери, что звучит как жанр</h1>
+<p>В каждом жанре три варианта мелодии на <strong>одном и том же бите и басе</strong>: меняется только мелодия и её инструмент. Послушай все три и скажи, какой ближе к жанру и чего не хватает. Выбранный вариант войдёт в книгу, а по нему я переделаю остальные жанры.</p>
+<h2 id="draft-varianty--трэп--как-у-lil-pump">Трэп — как у Lil Pump</h2>
+<p>Ориентир: Gucci Gang, ESSKEETIT. Один простой цепляющий мотив, который крутится почти без изменений, громкая перегруженная 808, простой бит.</p>
+<figure class="course loop" data-pid="0"><div class="ctitle">Трэп А: колокольчик-хук</div><div class="grid-bar"><button class="play" data-pid="0" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-1</span><span class="meta">145 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-X"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-r">3</td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:1.0"><b>5</b><i>C4</i></span><span class="chip" data-x="2" style="--w:1.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="4" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-x="5" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="6" style="--w:0.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="7" style="--w:1.5"><b>3</b><i>A3</i></span><span class="chip" data-x="8" style="--w:1.0"><b>3</b><i>A3</i></span><span class="chip" data-x="9" style="--w:1.5"><b>3</b><i>A3</i></span></span><span class="cbar"><span class="chip" data-x="10" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="11" style="--w:0.5"><b>2</b><i>G3</i></span><span class="chip" data-x="12" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="13" style="--w:0.5"><b>4</b><i>B3</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="1" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="2" style="--w:0.25">пауза</span><span class="chip" data-i="3" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip" data-i="4" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="5" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="6" style="--w:0.5">пауза</span><span class="chip" data-i="7" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="8" style="--w:0.5"><b>7</b><i>E4</i></span></span><span class="cbar"><span class="chip" data-i="9" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="10" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="11" style="--w:0.25">пауза</span><span class="chip" data-i="12" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip" data-i="13" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="14" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="15" style="--w:0.5">пауза</span><span class="chip" data-i="16" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="17" style="--w:0.5"><b>7</b><i>E4</i></span></span><span class="cbar"><span class="chip" data-i="18" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="19" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="20" style="--w:0.25">пауза</span><span class="chip" data-i="21" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip" data-i="22" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="23" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="24" style="--w:0.5">пауза</span><span class="chip" data-i="25" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="26" style="--w:0.5"><b>7</b><i>E4</i></span></span><span class="cbar"><span class="chip" data-i="27" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="28" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="29" style="--w:0.25">пауза</span><span class="chip" data-i="30" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip" data-i="31" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="32" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="33" style="--w:0.5">пауза</span><span class="chip" data-i="34" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip" data-i="35" style="--w:0.5"><b>12</b><i>C5</i></span></span></div></div><p class="cnote">Один такт мотива повторяется четыре раза — в этом весь Lil Pump. Повтор ноты, полутон G → A♭ и пауза посередине.</p></figure>
+<figure class="course loop" data-pid="1"><div class="ctitle">Трэп Б: мрачное пиано октавами</div><div class="grid-bar"><button class="play" data-pid="1" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-2</span><span class="meta">145 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-X"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-r">3</td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:1.0"><b>5</b><i>C4</i></span><span class="chip" data-x="2" style="--w:1.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="4" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-x="5" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="6" style="--w:0.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="7" style="--w:1.5"><b>3</b><i>A3</i></span><span class="chip" data-x="8" style="--w:1.0"><b>3</b><i>A3</i></span><span class="chip" data-x="9" style="--w:1.5"><b>3</b><i>A3</i></span></span><span class="cbar"><span class="chip" data-x="10" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="11" style="--w:0.5"><b>2</b><i>G3</i></span><span class="chip" data-x="12" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="13" style="--w:0.5"><b>4</b><i>B3</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-i="1" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="2" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="3" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="4" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-i="5" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="6" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip" data-i="7" style="--w:0.5"><b>9</b><i>G4</i></span></span><span class="cbar"><span class="chip" data-i="8" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-i="9" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="10" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="11" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="12" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-i="13" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="14" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip" data-i="15" style="--w:0.5"><b>9</b><i>G4</i></span></span><span class="cbar"><span class="chip" data-i="16" style="--w:0.5"><b>3</b><i>A3</i></span><span class="chip" data-i="17" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip" data-i="18" style="--w:0.5"><b>7</b><i>E4</i></span><span class="chip" data-i="19" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip" data-i="20" style="--w:0.5"><b>3</b><i>A3</i></span><span class="chip" data-i="21" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip" data-i="22" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="23" style="--w:0.5"><b>7</b><i>E4</i></span></span><span class="cbar"><span class="chip" data-i="24" style="--w:0.5"><b>2</b><i>G3</i></span><span class="chip" data-i="25" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="26" style="--w:0.5"><b>6</b><i>D4</i></span><span class="chip" data-i="27" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="28" style="--w:0.5"><b>2</b><i>G3</i></span><span class="chip" data-i="29" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip" data-i="30" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip" data-i="31" style="--w:0.5"><b>10</b><i>A4</i></span></span></div></div><p class="cnote">Пиано прыгает «низ — верх» восьмыми, а верхний голос медленно меняется. Тёмный, давящий звук.</p></figure>
+<figure class="course loop" data-pid="2"><div class="ctitle">Трэп В: писклявый синт</div><div class="grid-bar"><button class="play" data-pid="2" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-3</span><span class="meta">145 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-X"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-r">3</td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:1.0"><b>5</b><i>C4</i></span><span class="chip" data-x="2" style="--w:1.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="4" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-x="5" style="--w:1.5"><b>5</b><i>C4</i></span><span class="chip" data-x="6" style="--w:0.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="7" style="--w:1.5"><b>3</b><i>A3</i></span><span class="chip" data-x="8" style="--w:1.0"><b>3</b><i>A3</i></span><span class="chip" data-x="9" style="--w:1.5"><b>3</b><i>A3</i></span></span><span class="cbar"><span class="chip" data-x="10" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="11" style="--w:0.5"><b>2</b><i>G3</i></span><span class="chip" data-x="12" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="13" style="--w:0.5"><b>4</b><i>B3</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="1" style="--w:0.25">пауза</span><span class="chip" data-i="2" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="3" style="--w:0.25">пауза</span><span class="chip" data-i="4" style="--w:0.5"><b>14</b><i>E5</i></span><span class="chip" data-i="5" style="--w:0.5"><b>13</b><i>D5</i></span><span class="chip" data-i="6" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="7" style="--w:0.25">пауза</span><span class="chip" data-i="8" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip rest" data-i="9" style="--w:0.5">пауза</span><span class="chip" data-i="10" style="--w:0.5"><b>10</b><i>A4</i></span></span><span class="cbar"><span class="chip" data-i="11" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="12" style="--w:0.25">пауза</span><span class="chip" data-i="13" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="14" style="--w:0.25">пауза</span><span class="chip" data-i="15" style="--w:0.5"><b>14</b><i>E5</i></span><span class="chip" data-i="16" style="--w:0.5"><b>13</b><i>D5</i></span><span class="chip" data-i="17" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="18" style="--w:0.25">пауза</span><span class="chip" data-i="19" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip rest" data-i="20" style="--w:0.5">пауза</span><span class="chip" data-i="21" style="--w:0.5"><b>10</b><i>A4</i></span></span><span class="cbar"><span class="chip" data-i="22" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="23" style="--w:0.25">пауза</span><span class="chip" data-i="24" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="25" style="--w:0.25">пауза</span><span class="chip" data-i="26" style="--w:0.5"><b>14</b><i>E5</i></span><span class="chip" data-i="27" style="--w:0.5"><b>13</b><i>D5</i></span><span class="chip" data-i="28" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="29" style="--w:0.25">пауза</span><span class="chip" data-i="30" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip rest" data-i="31" style="--w:0.5">пауза</span><span class="chip" data-i="32" style="--w:0.5"><b>10</b><i>A4</i></span></span><span class="cbar"><span class="chip" data-i="33" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="34" style="--w:0.25">пауза</span><span class="chip" data-i="35" style="--w:0.25"><b>12</b><i>C5</i></span><span class="chip rest" data-i="36" style="--w:0.25">пауза</span><span class="chip" data-i="37" style="--w:0.5"><b>14</b><i>E5</i></span><span class="chip" data-i="38" style="--w:0.5"><b>13</b><i>D5</i></span><span class="chip" data-i="39" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip" data-i="40" style="--w:1.0"><b>16</b><i>G5</i></span><span class="chip rest" data-i="41" style="--w:0.5">пауза</span></span></div></div><p class="cnote">Короткие отрывистые ноты и акцент на верхней — дерзко и громко. На FM-1: короткий GATE и ACC на акцентах.</p></figure>
+<h2 id="draft-varianty--эмо-рэп--как-у-lil-peep">Эмо-рэп — как у Lil Peep</h2>
+<p>Ориентир: Star Shopping, Benz Truck. Гитара как сэмпл, грустная последовательность Am – F – C – G, медленный бит, много реверба.</p>
+<figure class="course loop" data-pid="3"><div class="ctitle">Эмо А: акустический перебор</div><div class="grid-bar"><button class="play" data-pid="3" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-4</span><span class="meta">76 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-r gs">3</td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="1" style="--w:0.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="2" style="--w:1.5"><b>3</b><i>A/ля</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:2.5"><b>1</b><i>F/фа</i></span><span class="chip" data-x="4" style="--w:1.5"><b>1</b><i>F/фа</i></span></span><span class="cbar"><span class="chip" data-x="5" style="--w:1.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="6" style="--w:0.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="7" style="--w:1.5"><b>5</b><i>C/до</i></span></span><span class="cbar"><span class="chip" data-x="8" style="--w:2.5"><b>2</b><i>G/соль</i></span><span class="chip" data-x="9" style="--w:1.5"><b>2</b><i>G/соль</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="staff-wrap"><svg class="staff" viewBox="0 0 848 195" role="img" aria-label="Ноты"><line class="sl" x1="4" y1="34" x2="844" y2="34"/><line class="sl" x1="4" y1="46" x2="844" y2="46"/><line class="sl" x1="4" y1="58" x2="844" y2="58"/><line class="sl" x1="4" y1="70" x2="844" y2="70"/><line class="sl" x1="4" y1="82" x2="844" y2="82"/><text class="ts" x="22" y="55">4</text><text class="ts" x="22" y="79">4</text><line class="sl" x1="44" y1="94.0" x2="66" y2="94.0"/><line class="sl" x1="44" y1="106.0" x2="66" y2="106.0"/><g class="nt" data-i="0"><ellipse class="hf" cx="55" cy="106.0" rx="7" ry="5.2" transform="rotate(-20 55 106.0)"/><line class="stem" x1="61.3" y1="104.0" x2="61.3" y2="70.0"/><path class="flag" d="M61.3 70.0 q 10 8 8 20"/><path class="flag" d="M61.3 78.0 q 10 8 8 20"/></g><text class="kn" data-i="0" x="55" y="144">3</text><text class="sy" x="55" y="160">A/ля</text><g class="nt" data-i="1"><ellipse class="hf" cx="79" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 79 82.0)"/><line class="stem" x1="85.3" y1="80.0" x2="85.3" y2="46.0"/><path class="flag" d="M85.3 46.0 q 10 8 8 20"/><path class="flag" d="M85.3 54.0 q 10 8 8 20"/></g><text class="kn" data-i="1" x="79" y="144">7</text><text class="sy" x="79" y="173">E/ми</text><g class="nt" data-i="2"><ellipse class="hf" cx="103" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 103 64.0)"/><line class="stem" x1="109.3" y1="62.0" x2="109.3" y2="28.0"/><path class="flag" d="M109.3 28.0 q 10 8 8 20"/><path class="flag" d="M109.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="2" x="103" y="144">10</text><text class="sy" x="103" y="160">A/ля</text><g class="nt" data-i="3"><ellipse class="hf" cx="127" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 127 58.0)"/><line class="stem" x1="120.7" y1="60.0" x2="120.7" y2="94.0"/><path class="flag" d="M120.7 94.0 q 10 -8 8 -20"/><path class="flag" d="M120.7 86.0 q 10 -8 8 -20"/></g><text class="kn" data-i="3" x="127" y="144">11</text><text class="sy" x="127" y="173">B/си</text><g class="nt" data-i="4"><ellipse class="hf" cx="151" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 151 52.0)"/><line class="stem" x1="144.7" y1="54.0" x2="144.7" y2="88.0"/><path class="flag" d="M144.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M144.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="4" x="151" y="144">12</text><text class="sy" x="151" y="160">C/до</text><g class="nt" data-i="5"><ellipse class="hf" cx="175" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 175 64.0)"/><line class="stem" x1="181.3" y1="62.0" x2="181.3" y2="28.0"/><path class="flag" d="M181.3 28.0 q 10 8 8 20"/><path class="flag" d="M181.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="5" x="175" y="144">10</text><text class="sy" x="175" y="173">A/ля</text><g class="nt" data-i="6"><ellipse class="hf" cx="199" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 199 82.0)"/><line class="stem" x1="205.3" y1="80.0" x2="205.3" y2="46.0"/><path class="flag" d="M205.3 46.0 q 10 8 8 20"/><path class="flag" d="M205.3 54.0 q 10 8 8 20"/></g><text class="kn" data-i="6" x="199" y="144">7</text><text class="sy" x="199" y="160">E/ми</text><g class="nt" data-i="7"><ellipse class="hf" cx="223" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 223 64.0)"/><line class="stem" x1="229.3" y1="62.0" x2="229.3" y2="28.0"/><path class="flag" d="M229.3 28.0 q 10 8 8 20"/><path class="flag" d="M229.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="7" x="223" y="144">10</text><text class="sy" x="223" y="173">A/ля</text><line class="sl" x1="236" y1="94.0" x2="258" y2="94.0"/><line class="sl" x1="236" y1="106.0" x2="258" y2="106.0"/><g class="nt" data-i="8"><ellipse class="hf" cx="247" cy="106.0" rx="7" ry="5.2" transform="rotate(-20 247 106.0)"/><line class="stem" x1="253.3" y1="104.0" x2="253.3" y2="70.0"/><path class="flag" d="M253.3 70.0 q 10 8 8 20"/><path class="flag" d="M253.3 78.0 q 10 8 8 20"/></g><text class="kn" data-i="8" x="247" y="144">3</text><text class="sy" x="247" y="160">A/ля</text><g class="nt" data-i="9"><ellipse class="hf" cx="271" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 271 82.0)"/><line class="stem" x1="277.3" y1="80.0" x2="277.3" y2="46.0"/><path class="flag" d="M277.3 46.0 q 10 8 8 20"/><path class="flag" d="M277.3 54.0 q 10 8 8 20"/></g><text class="kn" data-i="9" x="271" y="144">7</text><text class="sy" x="271" y="173">E/ми</text><g class="nt" data-i="10"><ellipse class="hf" cx="295" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 295 64.0)"/><line class="stem" x1="301.3" y1="62.0" x2="301.3" y2="28.0"/><path class="flag" d="M301.3 28.0 q 10 8 8 20"/><path class="flag" d="M301.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="10" x="295" y="144">10</text><text class="sy" x="295" y="160">A/ля</text><g class="nt" data-i="11"><ellipse class="hf" cx="319" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 319 58.0)"/><line class="stem" x1="312.7" y1="60.0" x2="312.7" y2="94.0"/><path class="flag" d="M312.7 94.0 q 10 -8 8 -20"/><path class="flag" d="M312.7 86.0 q 10 -8 8 -20"/></g><text class="kn" data-i="11" x="319" y="144">11</text><text class="sy" x="319" y="173">B/си</text><g class="nt" data-i="12"><ellipse class="hf" cx="343" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 343 52.0)"/><line class="stem" x1="336.7" y1="54.0" x2="336.7" y2="88.0"/><path class="flag" d="M336.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M336.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="12" x="343" y="144">12</text><text class="sy" x="343" y="160">C/до</text><g class="nt" data-i="13"><ellipse class="hf" cx="367" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 367 64.0)"/><line class="stem" x1="373.3" y1="62.0" x2="373.3" y2="28.0"/><path class="flag" d="M373.3 28.0 q 10 8 8 20"/><path class="flag" d="M373.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="13" x="367" y="144">10</text><text class="sy" x="367" y="173">A/ля</text><g class="nt" data-i="14"><ellipse class="hf" cx="391" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 391 82.0)"/><line class="stem" x1="397.3" y1="80.0" x2="397.3" y2="46.0"/><path class="flag" d="M397.3 46.0 q 10 8 8 20"/><path class="flag" d="M397.3 54.0 q 10 8 8 20"/></g><text class="kn" data-i="14" x="391" y="144">7</text><text class="sy" x="391" y="160">E/ми</text><g class="nt" data-i="15"><ellipse class="hf" cx="415" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 415 64.0)"/><line class="stem" x1="421.3" y1="62.0" x2="421.3" y2="28.0"/><path class="flag" d="M421.3 28.0 q 10 8 8 20"/><path class="flag" d="M421.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="15" x="415" y="144">10</text><text class="sy" x="415" y="173">A/ля</text><line class="bar" x1="434" y1="34" x2="434" y2="82"/><line class="sl" x1="442" y1="94.0" x2="464" y2="94.0"/><line class="sl" x1="442" y1="106.0" x2="464" y2="106.0"/><line class="sl" x1="442" y1="118.0" x2="464" y2="118.0"/><g class="nt" data-i="16"><ellipse class="hf" cx="453" cy="118.0" rx="7" ry="5.2" transform="rotate(-20 453 118.0)"/><line class="stem" x1="459.3" y1="116.0" x2="459.3" y2="82.0"/><path class="flag" d="M459.3 82.0 q 10 8 8 20"/><path class="flag" d="M459.3 90.0 q 10 8 8 20"/></g><text class="kn" data-i="16" x="453" y="144">1</text><text class="sy" x="453" y="160">F/фа</text><line class="sl" x1="466" y1="94.0" x2="488" y2="94.0"/><g class="nt" data-i="17"><ellipse class="hf" cx="477" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 477 94.0)"/><line class="stem" x1="483.3" y1="92.0" x2="483.3" y2="58.0"/><path class="flag" d="M483.3 58.0 q 10 8 8 20"/><path class="flag" d="M483.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="17" x="477" y="144">5</text><text class="sy" x="477" y="173">C/до</text><g class="nt" data-i="18"><ellipse class="hf" cx="501" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 501 76.0)"/><line class="stem" x1="507.3" y1="74.0" x2="507.3" y2="40.0"/><path class="flag" d="M507.3 40.0 q 10 8 8 20"/><path class="flag" d="M507.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="18" x="501" y="144">8</text><text class="sy" x="501" y="160">F/фа</text><g class="nt" data-i="19"><ellipse class="hf" cx="525" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 525 70.0)"/><line class="stem" x1="531.3" y1="68.0" x2="531.3" y2="34.0"/><path class="flag" d="M531.3 34.0 q 10 8 8 20"/><path class="flag" d="M531.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="19" x="525" y="144">9</text><text class="sy" x="525" y="173">G/соль</text><g class="nt" data-i="20"><ellipse class="hf" cx="549" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 549 64.0)"/><line class="stem" x1="555.3" y1="62.0" x2="555.3" y2="28.0"/><path class="flag" d="M555.3 28.0 q 10 8 8 20"/><path class="flag" d="M555.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="20" x="549" y="144">10</text><text class="sy" x="549" y="160">A/ля</text><g class="nt" data-i="21"><ellipse class="hf" cx="573" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 573 76.0)"/><line class="stem" x1="579.3" y1="74.0" x2="579.3" y2="40.0"/><path class="flag" d="M579.3 40.0 q 10 8 8 20"/><path class="flag" d="M579.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="21" x="573" y="144">8</text><text class="sy" x="573" y="173">F/фа</text><line class="sl" x1="586" y1="94.0" x2="608" y2="94.0"/><g class="nt" data-i="22"><ellipse class="hf" cx="597" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 597 94.0)"/><line class="stem" x1="603.3" y1="92.0" x2="603.3" y2="58.0"/><path class="flag" d="M603.3 58.0 q 10 8 8 20"/><path class="flag" d="M603.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="22" x="597" y="144">5</text><text class="sy" x="597" y="160">C/до</text><g class="nt" data-i="23"><ellipse class="hf" cx="621" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 621 76.0)"/><line class="stem" x1="627.3" y1="74.0" x2="627.3" y2="40.0"/><path class="flag" d="M627.3 40.0 q 10 8 8 20"/><path class="flag" d="M627.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="23" x="621" y="144">8</text><text class="sy" x="621" y="173">F/фа</text><line class="sl" x1="634" y1="94.0" x2="656" y2="94.0"/><line class="sl" x1="634" y1="106.0" x2="656" y2="106.0"/><line class="sl" x1="634" y1="118.0" x2="656" y2="118.0"/><g class="nt" data-i="24"><ellipse class="hf" cx="645" cy="118.0" rx="7" ry="5.2" transform="rotate(-20 645 118.0)"/><line class="stem" x1="651.3" y1="116.0" x2="651.3" y2="82.0"/><path class="flag" d="M651.3 82.0 q 10 8 8 20"/><path class="flag" d="M651.3 90.0 q 10 8 8 20"/></g><text class="kn" data-i="24" x="645" y="144">1</text><text class="sy" x="645" y="160">F/фа</text><line class="sl" x1="658" y1="94.0" x2="680" y2="94.0"/><g class="nt" data-i="25"><ellipse class="hf" cx="669" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 669 94.0)"/><line class="stem" x1="675.3" y1="92.0" x2="675.3" y2="58.0"/><path class="flag" d="M675.3 58.0 q 10 8 8 20"/><path class="flag" d="M675.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="25" x="669" y="144">5</text><text class="sy" x="669" y="173">C/до</text><g class="nt" data-i="26"><ellipse class="hf" cx="693" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 693 76.0)"/><line class="stem" x1="699.3" y1="74.0" x2="699.3" y2="40.0"/><path class="flag" d="M699.3 40.0 q 10 8 8 20"/><path class="flag" d="M699.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="26" x="693" y="144">8</text><text class="sy" x="693" y="160">F/фа</text><g class="nt" data-i="27"><ellipse class="hf" cx="717" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 717 70.0)"/><line class="stem" x1="723.3" y1="68.0" x2="723.3" y2="34.0"/><path class="flag" d="M723.3 34.0 q 10 8 8 20"/><path class="flag" d="M723.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="27" x="717" y="144">9</text><text class="sy" x="717" y="173">G/соль</text><g class="nt" data-i="28"><ellipse class="hf" cx="741" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 741 64.0)"/><line class="stem" x1="747.3" y1="62.0" x2="747.3" y2="28.0"/><path class="flag" d="M747.3 28.0 q 10 8 8 20"/><path class="flag" d="M747.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="28" x="741" y="144">10</text><text class="sy" x="741" y="160">A/ля</text><g class="nt" data-i="29"><ellipse class="hf" cx="765" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 765 76.0)"/><line class="stem" x1="771.3" y1="74.0" x2="771.3" y2="40.0"/><path class="flag" d="M771.3 40.0 q 10 8 8 20"/><path class="flag" d="M771.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="29" x="765" y="144">8</text><text class="sy" x="765" y="173">F/фа</text><line class="sl" x1="778" y1="94.0" x2="800" y2="94.0"/><g class="nt" data-i="30"><ellipse class="hf" cx="789" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 789 94.0)"/><line class="stem" x1="795.3" y1="92.0" x2="795.3" y2="58.0"/><path class="flag" d="M795.3 58.0 q 10 8 8 20"/><path class="flag" d="M795.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="30" x="789" y="144">5</text><text class="sy" x="789" y="160">C/до</text><g class="nt" data-i="31"><ellipse class="hf" cx="813" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 813 76.0)"/><line class="stem" x1="819.3" y1="74.0" x2="819.3" y2="40.0"/><path class="flag" d="M819.3 40.0 q 10 8 8 20"/><path class="flag" d="M819.3 48.0 q 10 8 8 20"/></g><text class="kn" data-i="31" x="813" y="144">8</text><text class="sy" x="813" y="173">F/фа</text><line class="bar" x1="832" y1="34" x2="832" y2="82"/><text class="lg" x="4" y="144">клавиша</text></svg><svg class="staff" viewBox="0 0 848 189" role="img" aria-label="Ноты"><line class="sl" x1="4" y1="34" x2="844" y2="34"/><line class="sl" x1="4" y1="46" x2="844" y2="46"/><line class="sl" x1="4" y1="58" x2="844" y2="58"/><line class="sl" x1="4" y1="70" x2="844" y2="70"/><line class="sl" x1="4" y1="82" x2="844" y2="82"/><line class="sl" x1="44" y1="94.0" x2="66" y2="94.0"/><g class="nt" data-i="32"><ellipse class="hf" cx="55" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 55 94.0)"/><line class="stem" x1="61.3" y1="92.0" x2="61.3" y2="58.0"/><path class="flag" d="M61.3 58.0 q 10 8 8 20"/><path class="flag" d="M61.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="32" x="55" y="138">5</text><text class="sy" x="55" y="154">C/до</text><g class="nt" data-i="33"><ellipse class="hf" cx="79" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 79 70.0)"/><line class="stem" x1="85.3" y1="68.0" x2="85.3" y2="34.0"/><path class="flag" d="M85.3 34.0 q 10 8 8 20"/><path class="flag" d="M85.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="33" x="79" y="138">9</text><text class="sy" x="79" y="167">G/соль</text><g class="nt" data-i="34"><ellipse class="hf" cx="103" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 103 52.0)"/><line class="stem" x1="96.7" y1="54.0" x2="96.7" y2="88.0"/><path class="flag" d="M96.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M96.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="34" x="103" y="138">12</text><text class="sy" x="103" y="154">C/до</text><g class="nt" data-i="35"><ellipse class="hf" cx="127" cy="46.0" rx="7" ry="5.2" transform="rotate(-20 127 46.0)"/><line class="stem" x1="120.7" y1="48.0" x2="120.7" y2="82.0"/><path class="flag" d="M120.7 82.0 q 10 -8 8 -20"/><path class="flag" d="M120.7 74.0 q 10 -8 8 -20"/></g><text class="kn" data-i="35" x="127" y="138">13</text><text class="sy" x="127" y="167">D/ре</text><g class="nt" data-i="36"><ellipse class="hf" cx="151" cy="40.0" rx="7" ry="5.2" transform="rotate(-20 151 40.0)"/><line class="stem" x1="144.7" y1="42.0" x2="144.7" y2="76.0"/><path class="flag" d="M144.7 76.0 q 10 -8 8 -20"/><path class="flag" d="M144.7 68.0 q 10 -8 8 -20"/></g><text class="kn" data-i="36" x="151" y="138">14</text><text class="sy" x="151" y="154">E/ми</text><g class="nt" data-i="37"><ellipse class="hf" cx="175" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 175 52.0)"/><line class="stem" x1="168.7" y1="54.0" x2="168.7" y2="88.0"/><path class="flag" d="M168.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M168.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="37" x="175" y="138">12</text><text class="sy" x="175" y="167">C/до</text><g class="nt" data-i="38"><ellipse class="hf" cx="199" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 199 70.0)"/><line class="stem" x1="205.3" y1="68.0" x2="205.3" y2="34.0"/><path class="flag" d="M205.3 34.0 q 10 8 8 20"/><path class="flag" d="M205.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="38" x="199" y="138">9</text><text class="sy" x="199" y="154">G/соль</text><g class="nt" data-i="39"><ellipse class="hf" cx="223" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 223 52.0)"/><line class="stem" x1="216.7" y1="54.0" x2="216.7" y2="88.0"/><path class="flag" d="M216.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M216.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="39" x="223" y="138">12</text><text class="sy" x="223" y="167">C/до</text><line class="sl" x1="236" y1="94.0" x2="258" y2="94.0"/><g class="nt" data-i="40"><ellipse class="hf" cx="247" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 247 94.0)"/><line class="stem" x1="253.3" y1="92.0" x2="253.3" y2="58.0"/><path class="flag" d="M253.3 58.0 q 10 8 8 20"/><path class="flag" d="M253.3 66.0 q 10 8 8 20"/></g><text class="kn" data-i="40" x="247" y="138">5</text><text class="sy" x="247" y="154">C/до</text><g class="nt" data-i="41"><ellipse class="hf" cx="271" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 271 70.0)"/><line class="stem" x1="277.3" y1="68.0" x2="277.3" y2="34.0"/><path class="flag" d="M277.3 34.0 q 10 8 8 20"/><path class="flag" d="M277.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="41" x="271" y="138">9</text><text class="sy" x="271" y="167">G/соль</text><g class="nt" data-i="42"><ellipse class="hf" cx="295" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 295 52.0)"/><line class="stem" x1="288.7" y1="54.0" x2="288.7" y2="88.0"/><path class="flag" d="M288.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M288.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="42" x="295" y="138">12</text><text class="sy" x="295" y="154">C/до</text><g class="nt" data-i="43"><ellipse class="hf" cx="319" cy="46.0" rx="7" ry="5.2" transform="rotate(-20 319 46.0)"/><line class="stem" x1="312.7" y1="48.0" x2="312.7" y2="82.0"/><path class="flag" d="M312.7 82.0 q 10 -8 8 -20"/><path class="flag" d="M312.7 74.0 q 10 -8 8 -20"/></g><text class="kn" data-i="43" x="319" y="138">13</text><text class="sy" x="319" y="167">D/ре</text><g class="nt" data-i="44"><ellipse class="hf" cx="343" cy="40.0" rx="7" ry="5.2" transform="rotate(-20 343 40.0)"/><line class="stem" x1="336.7" y1="42.0" x2="336.7" y2="76.0"/><path class="flag" d="M336.7 76.0 q 10 -8 8 -20"/><path class="flag" d="M336.7 68.0 q 10 -8 8 -20"/></g><text class="kn" data-i="44" x="343" y="138">14</text><text class="sy" x="343" y="154">E/ми</text><g class="nt" data-i="45"><ellipse class="hf" cx="367" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 367 52.0)"/><line class="stem" x1="360.7" y1="54.0" x2="360.7" y2="88.0"/><path class="flag" d="M360.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M360.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="45" x="367" y="138">12</text><text class="sy" x="367" y="167">C/до</text><g class="nt" data-i="46"><ellipse class="hf" cx="391" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 391 70.0)"/><line class="stem" x1="397.3" y1="68.0" x2="397.3" y2="34.0"/><path class="flag" d="M397.3 34.0 q 10 8 8 20"/><path class="flag" d="M397.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="46" x="391" y="138">9</text><text class="sy" x="391" y="154">G/соль</text><g class="nt" data-i="47"><ellipse class="hf" cx="415" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 415 52.0)"/><line class="stem" x1="408.7" y1="54.0" x2="408.7" y2="88.0"/><path class="flag" d="M408.7 88.0 q 10 -8 8 -20"/><path class="flag" d="M408.7 80.0 q 10 -8 8 -20"/></g><text class="kn" data-i="47" x="415" y="138">12</text><text class="sy" x="415" y="167">C/до</text><line class="bar" x1="434" y1="34" x2="434" y2="82"/><line class="sl" x1="442" y1="94.0" x2="464" y2="94.0"/><line class="sl" x1="442" y1="106.0" x2="464" y2="106.0"/><g class="nt" data-i="48"><ellipse class="hf" cx="453" cy="112.0" rx="7" ry="5.2" transform="rotate(-20 453 112.0)"/><line class="stem" x1="459.3" y1="110.0" x2="459.3" y2="76.0"/><path class="flag" d="M459.3 76.0 q 10 8 8 20"/><path class="flag" d="M459.3 84.0 q 10 8 8 20"/></g><text class="kn" data-i="48" x="453" y="138">2</text><text class="sy" x="453" y="154">G/соль</text><g class="nt" data-i="49"><ellipse class="hf" cx="477" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 477 88.0)"/><line class="stem" x1="483.3" y1="86.0" x2="483.3" y2="52.0"/><path class="flag" d="M483.3 52.0 q 10 8 8 20"/><path class="flag" d="M483.3 60.0 q 10 8 8 20"/></g><text class="kn" data-i="49" x="477" y="138">6</text><text class="sy" x="477" y="167">D/ре</text><g class="nt" data-i="50"><ellipse class="hf" cx="501" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 501 70.0)"/><line class="stem" x1="507.3" y1="68.0" x2="507.3" y2="34.0"/><path class="flag" d="M507.3 34.0 q 10 8 8 20"/><path class="flag" d="M507.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="50" x="501" y="138">9</text><text class="sy" x="501" y="154">G/соль</text><g class="nt" data-i="51"><ellipse class="hf" cx="525" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 525 64.0)"/><line class="stem" x1="531.3" y1="62.0" x2="531.3" y2="28.0"/><path class="flag" d="M531.3 28.0 q 10 8 8 20"/><path class="flag" d="M531.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="51" x="525" y="138">10</text><text class="sy" x="525" y="167">A/ля</text><g class="nt" data-i="52"><ellipse class="hf" cx="549" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 549 58.0)"/><line class="stem" x1="542.7" y1="60.0" x2="542.7" y2="94.0"/><path class="flag" d="M542.7 94.0 q 10 -8 8 -20"/><path class="flag" d="M542.7 86.0 q 10 -8 8 -20"/></g><text class="kn" data-i="52" x="549" y="138">11</text><text class="sy" x="549" y="154">B/си</text><g class="nt" data-i="53"><ellipse class="hf" cx="573" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 573 70.0)"/><line class="stem" x1="579.3" y1="68.0" x2="579.3" y2="34.0"/><path class="flag" d="M579.3 34.0 q 10 8 8 20"/><path class="flag" d="M579.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="53" x="573" y="138">9</text><text class="sy" x="573" y="167">G/соль</text><g class="nt" data-i="54"><ellipse class="hf" cx="597" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 597 88.0)"/><line class="stem" x1="603.3" y1="86.0" x2="603.3" y2="52.0"/><path class="flag" d="M603.3 52.0 q 10 8 8 20"/><path class="flag" d="M603.3 60.0 q 10 8 8 20"/></g><text class="kn" data-i="54" x="597" y="138">6</text><text class="sy" x="597" y="154">D/ре</text><g class="nt" data-i="55"><ellipse class="hf" cx="621" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 621 70.0)"/><line class="stem" x1="627.3" y1="68.0" x2="627.3" y2="34.0"/><path class="flag" d="M627.3 34.0 q 10 8 8 20"/><path class="flag" d="M627.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="55" x="621" y="138">9</text><text class="sy" x="621" y="167">G/соль</text><line class="sl" x1="634" y1="94.0" x2="656" y2="94.0"/><line class="sl" x1="634" y1="106.0" x2="656" y2="106.0"/><g class="nt" data-i="56"><ellipse class="hf" cx="645" cy="112.0" rx="7" ry="5.2" transform="rotate(-20 645 112.0)"/><line class="stem" x1="651.3" y1="110.0" x2="651.3" y2="76.0"/><path class="flag" d="M651.3 76.0 q 10 8 8 20"/><path class="flag" d="M651.3 84.0 q 10 8 8 20"/></g><text class="kn" data-i="56" x="645" y="138">2</text><text class="sy" x="645" y="154">G/соль</text><g class="nt" data-i="57"><ellipse class="hf" cx="669" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 669 88.0)"/><line class="stem" x1="675.3" y1="86.0" x2="675.3" y2="52.0"/><path class="flag" d="M675.3 52.0 q 10 8 8 20"/><path class="flag" d="M675.3 60.0 q 10 8 8 20"/></g><text class="kn" data-i="57" x="669" y="138">6</text><text class="sy" x="669" y="167">D/ре</text><g class="nt" data-i="58"><ellipse class="hf" cx="693" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 693 70.0)"/><line class="stem" x1="699.3" y1="68.0" x2="699.3" y2="34.0"/><path class="flag" d="M699.3 34.0 q 10 8 8 20"/><path class="flag" d="M699.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="58" x="693" y="138">9</text><text class="sy" x="693" y="154">G/соль</text><g class="nt" data-i="59"><ellipse class="hf" cx="717" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 717 64.0)"/><line class="stem" x1="723.3" y1="62.0" x2="723.3" y2="28.0"/><path class="flag" d="M723.3 28.0 q 10 8 8 20"/><path class="flag" d="M723.3 36.0 q 10 8 8 20"/></g><text class="kn" data-i="59" x="717" y="138">10</text><text class="sy" x="717" y="167">A/ля</text><g class="nt" data-i="60"><ellipse class="hf" cx="741" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 741 58.0)"/><line class="stem" x1="734.7" y1="60.0" x2="734.7" y2="94.0"/><path class="flag" d="M734.7 94.0 q 10 -8 8 -20"/><path class="flag" d="M734.7 86.0 q 10 -8 8 -20"/></g><text class="kn" data-i="60" x="741" y="138">11</text><text class="sy" x="741" y="154">B/си</text><g class="nt" data-i="61"><ellipse class="hf" cx="765" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 765 70.0)"/><line class="stem" x1="771.3" y1="68.0" x2="771.3" y2="34.0"/><path class="flag" d="M771.3 34.0 q 10 8 8 20"/><path class="flag" d="M771.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="61" x="765" y="138">9</text><text class="sy" x="765" y="167">G/соль</text><g class="nt" data-i="62"><ellipse class="hf" cx="789" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 789 88.0)"/><line class="stem" x1="795.3" y1="86.0" x2="795.3" y2="52.0"/><path class="flag" d="M795.3 52.0 q 10 8 8 20"/><path class="flag" d="M795.3 60.0 q 10 8 8 20"/></g><text class="kn" data-i="62" x="789" y="138">6</text><text class="sy" x="789" y="154">D/ре</text><g class="nt" data-i="63"><ellipse class="hf" cx="813" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 813 70.0)"/><line class="stem" x1="819.3" y1="68.0" x2="819.3" y2="34.0"/><path class="flag" d="M819.3 34.0 q 10 8 8 20"/><path class="flag" d="M819.3 42.0 q 10 8 8 20"/></g><text class="kn" data-i="63" x="813" y="138">9</text><text class="sy" x="813" y="167">G/соль</text><line class="bar" x1="832" y1="34" x2="832" y2="82"/><text class="lg" x="4" y="138">клавиша</text></svg></div></div><p class="cnote">Гитара со стальными струнами, перебор шестнадцатыми, на октаву ниже (OCT−).</p></figure>
+<figure class="course loop" data-pid="4"><div class="ctitle">Эмо Б: грязная электрогитара</div><div class="grid-bar"><button class="play" data-pid="4" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-5</span><span class="meta">76 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-r gs">3</td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t2"><label class="tmute"><input type="checkbox" checked data-voice="pad"> <span class="tno">2</span> Аккорды (CHORD = POWER)</label><div class="ccards"><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>A3</b><span>A5</span><i>VI</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>F3</b><span>F5</span><i>IV</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>C4</b><span>C5</span><i>I</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span><span class="ccard"><b>G3</b><span>G5</span><i>V</i></span></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="1" style="--w:0.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="2" style="--w:1.5"><b>3</b><i>A/ля</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:2.5"><b>1</b><i>F/фа</i></span><span class="chip" data-x="4" style="--w:1.5"><b>1</b><i>F/фа</i></span></span><span class="cbar"><span class="chip" data-x="5" style="--w:1.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="6" style="--w:0.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="7" style="--w:1.5"><b>5</b><i>C/до</i></span></span><span class="cbar"><span class="chip" data-x="8" style="--w:2.5"><b>2</b><i>G/соль</i></span><span class="chip" data-x="9" style="--w:1.5"><b>2</b><i>G/соль</i></span></span></div></div><p class="cnote">Пауэр-аккорды (CHORD = POWER) восьмыми, как будто по струнам бьют медиатором через перегруз.</p></figure>
+<figure class="course loop" data-pid="5"><div class="ctitle">Эмо В: лоу-фай нейлон</div><div class="grid-bar"><button class="play" data-pid="5" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-6</span><span class="meta">76 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td><td class="c v-r gs">3</td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:1.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="1" style="--w:0.75"><b>3</b><i>A/ля</i></span><span class="chip" data-x="2" style="--w:1.5"><b>3</b><i>A/ля</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:2.5"><b>1</b><i>F/фа</i></span><span class="chip" data-x="4" style="--w:1.5"><b>1</b><i>F/фа</i></span></span><span class="cbar"><span class="chip" data-x="5" style="--w:1.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="6" style="--w:0.75"><b>5</b><i>C/до</i></span><span class="chip" data-x="7" style="--w:1.5"><b>5</b><i>C/до</i></span></span><span class="cbar"><span class="chip" data-x="8" style="--w:2.5"><b>2</b><i>G/соль</i></span><span class="chip" data-x="9" style="--w:1.5"><b>2</b><i>G/соль</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="staff-wrap"><svg class="staff" viewBox="0 0 464 195" role="img" aria-label="Ноты"><line class="sl" x1="4" y1="34" x2="460" y2="34"/><line class="sl" x1="4" y1="46" x2="460" y2="46"/><line class="sl" x1="4" y1="58" x2="460" y2="58"/><line class="sl" x1="4" y1="70" x2="460" y2="70"/><line class="sl" x1="4" y1="82" x2="460" y2="82"/><text class="ts" x="22" y="55">4</text><text class="ts" x="22" y="79">4</text><line class="sl" x1="44" y1="94.0" x2="66" y2="94.0"/><line class="sl" x1="44" y1="106.0" x2="66" y2="106.0"/><g class="nt" data-i="0"><ellipse class="hf" cx="55" cy="106.0" rx="7" ry="5.2" transform="rotate(-20 55 106.0)"/><line class="stem" x1="61.3" y1="104.0" x2="61.3" y2="70.0"/><path class="flag" d="M61.3 70.0 q 10 8 8 20"/></g><text class="kn" data-i="0" x="55" y="144">3</text><text class="sy" x="55" y="160">A/ля</text><g class="nt" data-i="1"><ellipse class="hf" cx="79" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 79 82.0)"/><line class="stem" x1="85.3" y1="80.0" x2="85.3" y2="46.0"/><path class="flag" d="M85.3 46.0 q 10 8 8 20"/></g><text class="kn" data-i="1" x="79" y="144">7</text><text class="sy" x="79" y="173">E/ми</text><g class="nt" data-i="2"><ellipse class="hf" cx="103" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 103 64.0)"/><line class="stem" x1="109.3" y1="62.0" x2="109.3" y2="28.0"/><path class="flag" d="M109.3 28.0 q 10 8 8 20"/></g><text class="kn" data-i="2" x="103" y="144">10</text><text class="sy" x="103" y="160">A/ля</text><g class="nt" data-i="3"><ellipse class="hf" cx="127" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 127 52.0)"/><line class="stem" x1="120.7" y1="54.0" x2="120.7" y2="88.0"/><path class="flag" d="M120.7 88.0 q 10 -8 8 -20"/></g><text class="kn" data-i="3" x="127" y="144">12</text><text class="sy" x="127" y="173">C/до</text><g class="nt" data-i="4"><ellipse class="hf" cx="151" cy="40.0" rx="7" ry="5.2" transform="rotate(-20 151 40.0)"/><line class="stem" x1="144.7" y1="42.0" x2="144.7" y2="76.0"/><path class="flag" d="M144.7 76.0 q 10 -8 8 -20"/></g><text class="kn" data-i="4" x="151" y="144">14</text><text class="sy" x="151" y="160">E/ми</text><g class="nt" data-i="5"><ellipse class="hf" cx="175" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 175 52.0)"/><line class="stem" x1="168.7" y1="54.0" x2="168.7" y2="88.0"/><path class="flag" d="M168.7 88.0 q 10 -8 8 -20"/></g><text class="kn" data-i="5" x="175" y="144">12</text><text class="sy" x="175" y="173">C/до</text><g class="nt" data-i="6"><ellipse class="hf" cx="199" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 199 64.0)"/><line class="stem" x1="205.3" y1="62.0" x2="205.3" y2="28.0"/><path class="flag" d="M205.3 28.0 q 10 8 8 20"/></g><text class="kn" data-i="6" x="199" y="144">10</text><text class="sy" x="199" y="160">A/ля</text><g class="nt" data-i="7"><ellipse class="hf" cx="223" cy="82.0" rx="7" ry="5.2" transform="rotate(-20 223 82.0)"/><line class="stem" x1="229.3" y1="80.0" x2="229.3" y2="46.0"/><path class="flag" d="M229.3 46.0 q 10 8 8 20"/></g><text class="kn" data-i="7" x="223" y="144">7</text><text class="sy" x="223" y="173">E/ми</text><line class="bar" x1="242" y1="34" x2="242" y2="82"/><line class="sl" x1="250" y1="94.0" x2="272" y2="94.0"/><line class="sl" x1="250" y1="106.0" x2="272" y2="106.0"/><line class="sl" x1="250" y1="118.0" x2="272" y2="118.0"/><g class="nt" data-i="8"><ellipse class="hf" cx="261" cy="118.0" rx="7" ry="5.2" transform="rotate(-20 261 118.0)"/><line class="stem" x1="267.3" y1="116.0" x2="267.3" y2="82.0"/><path class="flag" d="M267.3 82.0 q 10 8 8 20"/></g><text class="kn" data-i="8" x="261" y="144">1</text><text class="sy" x="261" y="160">F/фа</text><line class="sl" x1="274" y1="94.0" x2="296" y2="94.0"/><g class="nt" data-i="9"><ellipse class="hf" cx="285" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 285 94.0)"/><line class="stem" x1="291.3" y1="92.0" x2="291.3" y2="58.0"/><path class="flag" d="M291.3 58.0 q 10 8 8 20"/></g><text class="kn" data-i="9" x="285" y="144">5</text><text class="sy" x="285" y="173">C/до</text><g class="nt" data-i="10"><ellipse class="hf" cx="309" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 309 76.0)"/><line class="stem" x1="315.3" y1="74.0" x2="315.3" y2="40.0"/><path class="flag" d="M315.3 40.0 q 10 8 8 20"/></g><text class="kn" data-i="10" x="309" y="144">8</text><text class="sy" x="309" y="160">F/фа</text><g class="nt" data-i="11"><ellipse class="hf" cx="333" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 333 64.0)"/><line class="stem" x1="339.3" y1="62.0" x2="339.3" y2="28.0"/><path class="flag" d="M339.3 28.0 q 10 8 8 20"/></g><text class="kn" data-i="11" x="333" y="144">10</text><text class="sy" x="333" y="173">A/ля</text><g class="nt" data-i="12"><ellipse class="hf" cx="357" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 357 52.0)"/><line class="stem" x1="350.7" y1="54.0" x2="350.7" y2="88.0"/><path class="flag" d="M350.7 88.0 q 10 -8 8 -20"/></g><text class="kn" data-i="12" x="357" y="144">12</text><text class="sy" x="357" y="160">C/до</text><g class="nt" data-i="13"><ellipse class="hf" cx="381" cy="64.0" rx="7" ry="5.2" transform="rotate(-20 381 64.0)"/><line class="stem" x1="387.3" y1="62.0" x2="387.3" y2="28.0"/><path class="flag" d="M387.3 28.0 q 10 8 8 20"/></g><text class="kn" data-i="13" x="381" y="144">10</text><text class="sy" x="381" y="173">A/ля</text><g class="nt" data-i="14"><ellipse class="hf" cx="405" cy="76.0" rx="7" ry="5.2" transform="rotate(-20 405 76.0)"/><line class="stem" x1="411.3" y1="74.0" x2="411.3" y2="40.0"/><path class="flag" d="M411.3 40.0 q 10 8 8 20"/></g><text class="kn" data-i="14" x="405" y="144">8</text><text class="sy" x="405" y="160">F/фа</text><line class="sl" x1="418" y1="94.0" x2="440" y2="94.0"/><g class="nt" data-i="15"><ellipse class="hf" cx="429" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 429 94.0)"/><line class="stem" x1="435.3" y1="92.0" x2="435.3" y2="58.0"/><path class="flag" d="M435.3 58.0 q 10 8 8 20"/></g><text class="kn" data-i="15" x="429" y="144">5</text><text class="sy" x="429" y="173">C/до</text><line class="bar" x1="448" y1="34" x2="448" y2="82"/><text class="lg" x="4" y="144">клавиша</text></svg><svg class="staff" viewBox="0 0 464 189" role="img" aria-label="Ноты"><line class="sl" x1="4" y1="34" x2="460" y2="34"/><line class="sl" x1="4" y1="46" x2="460" y2="46"/><line class="sl" x1="4" y1="58" x2="460" y2="58"/><line class="sl" x1="4" y1="70" x2="460" y2="70"/><line class="sl" x1="4" y1="82" x2="460" y2="82"/><line class="sl" x1="44" y1="94.0" x2="66" y2="94.0"/><g class="nt" data-i="16"><ellipse class="hf" cx="55" cy="94.0" rx="7" ry="5.2" transform="rotate(-20 55 94.0)"/><line class="stem" x1="61.3" y1="92.0" x2="61.3" y2="58.0"/><path class="flag" d="M61.3 58.0 q 10 8 8 20"/></g><text class="kn" data-i="16" x="55" y="138">5</text><text class="sy" x="55" y="154">C/до</text><g class="nt" data-i="17"><ellipse class="hf" cx="79" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 79 70.0)"/><line class="stem" x1="85.3" y1="68.0" x2="85.3" y2="34.0"/><path class="flag" d="M85.3 34.0 q 10 8 8 20"/></g><text class="kn" data-i="17" x="79" y="138">9</text><text class="sy" x="79" y="167">G/соль</text><g class="nt" data-i="18"><ellipse class="hf" cx="103" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 103 52.0)"/><line class="stem" x1="96.7" y1="54.0" x2="96.7" y2="88.0"/><path class="flag" d="M96.7 88.0 q 10 -8 8 -20"/></g><text class="kn" data-i="18" x="103" y="138">12</text><text class="sy" x="103" y="154">C/до</text><g class="nt" data-i="19"><ellipse class="hf" cx="127" cy="40.0" rx="7" ry="5.2" transform="rotate(-20 127 40.0)"/><line class="stem" x1="120.7" y1="42.0" x2="120.7" y2="76.0"/><path class="flag" d="M120.7 76.0 q 10 -8 8 -20"/></g><text class="kn" data-i="19" x="127" y="138">14</text><text class="sy" x="127" y="167">E/ми</text><g class="nt" data-i="20"><ellipse class="hf" cx="151" cy="28.0" rx="7" ry="5.2" transform="rotate(-20 151 28.0)"/><line class="stem" x1="144.7" y1="30.0" x2="144.7" y2="64.0"/><path class="flag" d="M144.7 64.0 q 10 -8 8 -20"/></g><text class="kn" data-i="20" x="151" y="138">16</text><text class="sy" x="151" y="154">G/соль</text><g class="nt" data-i="21"><ellipse class="hf" cx="175" cy="40.0" rx="7" ry="5.2" transform="rotate(-20 175 40.0)"/><line class="stem" x1="168.7" y1="42.0" x2="168.7" y2="76.0"/><path class="flag" d="M168.7 76.0 q 10 -8 8 -20"/></g><text class="kn" data-i="21" x="175" y="138">14</text><text class="sy" x="175" y="167">E/ми</text><g class="nt" data-i="22"><ellipse class="hf" cx="199" cy="52.0" rx="7" ry="5.2" transform="rotate(-20 199 52.0)"/><line class="stem" x1="192.7" y1="54.0" x2="192.7" y2="88.0"/><path class="flag" d="M192.7 88.0 q 10 -8 8 -20"/></g><text class="kn" data-i="22" x="199" y="138">12</text><text class="sy" x="199" y="154">C/до</text><g class="nt" data-i="23"><ellipse class="hf" cx="223" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 223 70.0)"/><line class="stem" x1="229.3" y1="68.0" x2="229.3" y2="34.0"/><path class="flag" d="M229.3 34.0 q 10 8 8 20"/></g><text class="kn" data-i="23" x="223" y="138">9</text><text class="sy" x="223" y="167">G/соль</text><line class="bar" x1="242" y1="34" x2="242" y2="82"/><line class="sl" x1="250" y1="94.0" x2="272" y2="94.0"/><line class="sl" x1="250" y1="106.0" x2="272" y2="106.0"/><g class="nt" data-i="24"><ellipse class="hf" cx="261" cy="112.0" rx="7" ry="5.2" transform="rotate(-20 261 112.0)"/><line class="stem" x1="267.3" y1="110.0" x2="267.3" y2="76.0"/><path class="flag" d="M267.3 76.0 q 10 8 8 20"/></g><text class="kn" data-i="24" x="261" y="138">2</text><text class="sy" x="261" y="154">G/соль</text><g class="nt" data-i="25"><ellipse class="hf" cx="285" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 285 88.0)"/><line class="stem" x1="291.3" y1="86.0" x2="291.3" y2="52.0"/><path class="flag" d="M291.3 52.0 q 10 8 8 20"/></g><text class="kn" data-i="25" x="285" y="138">6</text><text class="sy" x="285" y="167">D/ре</text><g class="nt" data-i="26"><ellipse class="hf" cx="309" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 309 70.0)"/><line class="stem" x1="315.3" y1="68.0" x2="315.3" y2="34.0"/><path class="flag" d="M315.3 34.0 q 10 8 8 20"/></g><text class="kn" data-i="26" x="309" y="138">9</text><text class="sy" x="309" y="154">G/соль</text><g class="nt" data-i="27"><ellipse class="hf" cx="333" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 333 58.0)"/><line class="stem" x1="326.7" y1="60.0" x2="326.7" y2="94.0"/><path class="flag" d="M326.7 94.0 q 10 -8 8 -20"/></g><text class="kn" data-i="27" x="333" y="138">11</text><text class="sy" x="333" y="167">B/си</text><g class="nt" data-i="28"><ellipse class="hf" cx="357" cy="46.0" rx="7" ry="5.2" transform="rotate(-20 357 46.0)"/><line class="stem" x1="350.7" y1="48.0" x2="350.7" y2="82.0"/><path class="flag" d="M350.7 82.0 q 10 -8 8 -20"/></g><text class="kn" data-i="28" x="357" y="138">13</text><text class="sy" x="357" y="154">D/ре</text><g class="nt" data-i="29"><ellipse class="hf" cx="381" cy="58.0" rx="7" ry="5.2" transform="rotate(-20 381 58.0)"/><line class="stem" x1="374.7" y1="60.0" x2="374.7" y2="94.0"/><path class="flag" d="M374.7 94.0 q 10 -8 8 -20"/></g><text class="kn" data-i="29" x="381" y="138">11</text><text class="sy" x="381" y="167">B/си</text><g class="nt" data-i="30"><ellipse class="hf" cx="405" cy="70.0" rx="7" ry="5.2" transform="rotate(-20 405 70.0)"/><line class="stem" x1="411.3" y1="68.0" x2="411.3" y2="34.0"/><path class="flag" d="M411.3 34.0 q 10 8 8 20"/></g><text class="kn" data-i="30" x="405" y="138">9</text><text class="sy" x="405" y="154">G/соль</text><g class="nt" data-i="31"><ellipse class="hf" cx="429" cy="88.0" rx="7" ry="5.2" transform="rotate(-20 429 88.0)"/><line class="stem" x1="435.3" y1="86.0" x2="435.3" y2="52.0"/><path class="flag" d="M435.3 52.0 q 10 8 8 20"/></g><text class="kn" data-i="31" x="429" y="138">6</text><text class="sy" x="429" y="167">D/ре</text><line class="bar" x1="448" y1="34" x2="448" y2="82"/><text class="lg" x="4" y="138">клавиша</text></svg></div></div><p class="cnote">Нейлон восьмыми, приглушённый, как старая запись, с треском пластинки и большим ревербом.</p></figure>
+<h2 id="draft-varianty--дрилл--как-у-chief-keef-и-central-cee">Дрилл — как у Chief Keef и Central Cee</h2>
+<p>Два направления: <strong>Чикаго</strong> (Chief Keef, Love Sosa — мрачная «оркестровая» медь) и <strong>UK</strong> (Central Cee — пиано или гитара в триолях, 808 со слайдами). У чикагского варианта свой бит; варианты Б и В — на одном UK-бите.</p>
+<figure class="course loop" data-pid="6"><div class="ctitle">Дрилл А: Чикаго, медь</div><div class="grid-bar"><button class="play" data-pid="6" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-7</span><span class="meta">136 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">4</span> CLAP</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-r">3</td><td class="c v-e"></td><td class="c v-r gs">4</td><td class="c v-e"></td><td class="c v-r">4</td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">6</span> OHAT</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t2"><label class="tmute"><input type="checkbox" checked data-voice="pad"> <span class="tno">2</span> Аккорды (CHORD = TRIAD)</label><div class="ccards"><span class="ccard"><b>C4</b><span>Cm</span><i>i</i></span><span class="ccard"><b>A3</b><span>A♭</span><i>VI</i></span><span class="ccard"><b>F3</b><span>Fm</span><i>iv</i></span><span class="ccard"><b>G3</b><span>G</span><i>V</i></span></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:2.0"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:0.5"><b>5</b><i>C4</i></span><span class="chip" data-x="2" style="--w:1.5"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-x="3" style="--w:1.5"><b>3</b><i>A3</i></span><span class="chip" data-x="4" style="--w:1.0"><b>3</b><i>A3</i></span><span class="chip" data-x="5" style="--w:1.0"><b>3</b><i>A3</i></span><span class="chip" data-x="6" style="--w:0.5"><b>3</b><i>A3</i></span></span><span class="cbar"><span class="chip" data-x="7" style="--w:2.0"><b>1</b><i>F3</i></span><span class="chip" data-x="8" style="--w:0.5"><b>1</b><i>F3</i></span><span class="chip" data-x="9" style="--w:1.5"><b>1</b><i>F3</i></span></span><span class="cbar"><span class="chip" data-x="10" style="--w:1.5"><b>2</b><i>G3</i></span><span class="chip" data-x="11" style="--w:1.0"><b>2</b><i>G3</i></span><span class="chip" data-x="12" style="--w:1.0"><b>2</b><i>G3</i></span><span class="chip" data-x="13" style="--w:0.5"><b>4</b><i>B3</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="1" style="--w:0.5">пауза</span><span class="chip" data-i="2" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="3" style="--w:0.5">пауза</span><span class="chip" data-i="4" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip rest" data-i="5" style="--w:0.5">пауза</span><span class="chip" data-i="6" style="--w:1.0"><b>9</b><i>G4</i></span></span><span class="cbar"><span class="chip" data-i="7" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="8" style="--w:0.5">пауза</span><span class="chip" data-i="9" style="--w:0.5"><b>10</b><i>A4</i></span><span class="chip rest" data-i="10" style="--w:0.5">пауза</span><span class="chip" data-i="11" style="--w:0.5"><b>9</b><i>G4</i></span><span class="chip rest" data-i="12" style="--w:0.5">пауза</span><span class="chip" data-i="13" style="--w:1.0"><b>7</b><i>E4</i></span></span><span class="cbar"><span class="chip" data-i="14" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="15" style="--w:0.5">пауза</span><span class="chip" data-i="16" style="--w:0.5"><b>12</b><i>C5</i></span><span class="chip rest" data-i="17" style="--w:0.5">пауза</span><span class="chip" data-i="18" style="--w:0.5"><b>11</b><i>B4</i></span><span class="chip rest" data-i="19" style="--w:0.5">пауза</span><span class="chip" data-i="20" style="--w:1.0"><b>9</b><i>G4</i></span></span><span class="cbar"><span class="chip" data-i="21" style="--w:0.5"><b>8</b><i>F4</i></span><span class="chip rest" data-i="22" style="--w:0.5">пауза</span><span class="chip" data-i="23" style="--w:0.5"><b>8</b><i>F4</i></span><span class="chip rest" data-i="24" style="--w:0.5">пауза</span><span class="chip" data-i="25" style="--w:0.5"><b>7</b><i>E4</i></span><span class="chip rest" data-i="26" style="--w:0.5">пауза</span><span class="chip" data-i="27" style="--w:0.5"><b>6</b><i>D4</i></span><span class="chip" data-i="28" style="--w:0.5"><b>4</b><i>B3</i></span></span></div></div><p class="cnote">Медные «удары» с паузами и струнные фоном, гармонический минор. Так звучит чикагский дрилл 2012 года.</p></figure>
+<figure class="course loop" data-pid="7"><div class="ctitle">Дрилл Б: UK, пиано триолями</div><div class="grid-bar"><button class="play" data-pid="7" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-8</span><span class="meta">142 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-O gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-O gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-g"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-r">2</td><td class="c v-X"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:2.5"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:1.5"><b>12</b><i>C5</i></span></span><span class="cbar"><span class="chip rest" data-x="2" style="--w:0.5">пауза</span><span class="chip" data-x="3" style="--w:2.75"><b>5</b><i>C4</i></span><span class="chip" data-x="4" style="--w:0.5"><b>6</b><i>D4</i></span><span class="chip" data-x="5" style="--w:0.25"><b>5</b><i>C4</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.3333333333333333"><b>5</b><i>C4</i></span><span class="chip" data-i="1" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="2" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="3" style="--w:0.3333333333333333"><b>11</b><i>B4</i></span><span class="chip" data-i="4" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="5" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="6" style="--w:0.3333333333333333"><b>12</b><i>C5</i></span><span class="chip" data-i="7" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="8" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="9" style="--w:1.0"><b>11</b><i>B4</i></span></span><span class="cbar"><span class="chip" data-i="10" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="11" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="12" style="--w:0.3333333333333333"><b>5</b><i>C4</i></span><span class="chip" data-i="13" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="14" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="15" style="--w:0.3333333333333333"><b>5</b><i>C4</i></span><span class="chip" data-i="16" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="17" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="18" style="--w:0.3333333333333333"><b>5</b><i>C4</i></span><span class="chip" data-i="19" style="--w:1.0"><b>4</b><i>B3</i></span></span><span class="cbar"><span class="chip" data-i="20" style="--w:0.3333333333333333"><b>5</b><i>C4</i></span><span class="chip" data-i="21" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="22" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="23" style="--w:0.3333333333333333"><b>11</b><i>B4</i></span><span class="chip" data-i="24" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="25" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="26" style="--w:0.3333333333333333"><b>12</b><i>C5</i></span><span class="chip" data-i="27" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="28" style="--w:0.3333333333333333"><b>7</b><i>E4</i></span><span class="chip" data-i="29" style="--w:1.0"><b>11</b><i>B4</i></span></span><span class="cbar"><span class="chip" data-i="30" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="31" style="--w:0.3333333333333333"><b>6</b><i>D4</i></span><span class="chip" data-i="32" style="--w:0.3333333333333333"><b>4</b><i>B3</i></span><span class="chip" data-i="33" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="34" style="--w:0.3333333333333333"><b>6</b><i>D4</i></span><span class="chip" data-i="35" style="--w:0.3333333333333333"><b>4</b><i>B3</i></span><span class="chip" data-i="36" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="37" style="--w:0.3333333333333333"><b>9</b><i>G4</i></span><span class="chip" data-i="38" style="--w:0.3333333333333333"><b>8</b><i>F4</i></span><span class="chip" data-i="39" style="--w:1.0"><b>6</b><i>D4</i></span></span></div></div><p class="cnote">Пиано играет триолями — по три ноты на долю — поверх ровного бита. На FM-1 это DIV 8T.</p></figure>
+<figure class="course loop" data-pid="8"><div class="ctitle">Дрилл В: UK, гитара триолями</div><div class="grid-bar"><button class="play" data-pid="8" aria-label="Слушать"><span class="ico">▶</span><span class="txt">Слушать</span></button><span class="aud" title="Этот пример в аудио-пакете">♪ О-9</span><span class="meta">142 BPM · 4 такта · галочки = mute (как GLO + 1…4)</span></div><div class="trk t4"><label class="tmute"><input type="checkbox" checked data-voice="drums"> <span class="tno">4</span> Ударные</label><div class="grid-scroll"><table class="grid drum mini"><caption>такт 1</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-O gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td></tr></table><table class="grid drum mini"><caption>такт 2</caption><tr><th class="lab"><span class="ln">1</span> KICK</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">3</span> SNR</th><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-x"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-O gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-g"></td><td class="c v-e"></td></tr><tr><th class="lab"><span class="ln">5</span> HAT</th><td class="c v-X gs"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e gs"></td><td class="c v-e"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e gs"></td><td class="c v-X"></td><td class="c v-e"></td><td class="c v-e"></td><td class="c v-X gs"></td><td class="c v-r">2</td><td class="c v-X"></td><td class="c v-e"></td></tr></table></div></div><div class="trk t1"><label class="tmute"><input type="checkbox" checked data-voice="bass"> <span class="tno">1</span> Бас</label><div class="chips"><span class="cbar"><span class="chip" data-x="0" style="--w:2.5"><b>5</b><i>C4</i></span><span class="chip" data-x="1" style="--w:1.5"><b>12</b><i>C5</i></span></span><span class="cbar"><span class="chip rest" data-x="2" style="--w:0.5">пауза</span><span class="chip" data-x="3" style="--w:2.75"><b>5</b><i>C4</i></span><span class="chip" data-x="4" style="--w:0.5"><b>6</b><i>D4</i></span><span class="chip" data-x="5" style="--w:0.25"><b>5</b><i>C4</i></span></span></div></div><div class="trk t3"><label class="tmute"><input type="checkbox" checked data-voice="lead"> <span class="tno">3</span> Мелодия</label><div class="chips"><span class="cbar"><span class="chip" data-i="0" style="--w:0.6666666666666666"><b>9</b><i>G4</i></span><span class="chip" data-i="1" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="2" style="--w:1.0"><b>9</b><i>G4</i></span><span class="chip" data-i="3" style="--w:1.0"><b>7</b><i>E4</i></span><span class="chip" data-i="4" style="--w:1.0"><b>6</b><i>D4</i></span></span><span class="cbar"><span class="chip" data-i="5" style="--w:1.0"><b>5</b><i>C4</i></span><span class="chip" data-i="6" style="--w:1.0"><b>4</b><i>B3</i></span><span class="chip" data-i="7" style="--w:2.0"><b>5</b><i>C4</i></span></span><span class="cbar"><span class="chip" data-i="8" style="--w:0.6666666666666666"><b>9</b><i>G4</i></span><span class="chip" data-i="9" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="10" style="--w:1.0"><b>9</b><i>G4</i></span><span class="chip" data-i="11" style="--w:1.0"><b>7</b><i>E4</i></span><span class="chip" data-i="12" style="--w:1.0"><b>6</b><i>D4</i></span></span><span class="cbar"><span class="chip" data-i="13" style="--w:0.6666666666666666"><b>9</b><i>G4</i></span><span class="chip" data-i="14" style="--w:0.3333333333333333"><b>10</b><i>A4</i></span><span class="chip" data-i="15" style="--w:1.0"><b>11</b><i>B4</i></span><span class="chip" data-i="16" style="--w:1.0"><b>10</b><i>A4</i></span><span class="chip" data-i="17" style="--w:1.0"><b>9</b><i>G4</i></span></span></div></div><p class="cnote">Грустная гитарная фраза в триолях: G – A♭ – G и вниз, потом повышенная B → C. Медленнее и мелодичнее, чем пиано.</p></figure></section>
+  </main>
+</div>
+<script>
+const PATTERNS = [{"type":"ev","bpm":145,"beats":16,"ev":[[0.0,1.5,36,"bass",["C4"],-1,null,""],[1.5,1.0,36,"bass",["C4"],-1,null,""],[2.5,1.5,36,"bass",["C4"],-1,null,""],[4.0,1.5,36,"bass",["C4"],-1,null,""],[5.5,0.5,36,"bass",["C4"],-1,null,""],[6.0,1.5,36,"bass",["C4"],-1,null,""],[7.5,0.5,36,"bass",["C4"],-1,null,""],[8.0,1.5,32,"bass",["A3"],-1,null,""],[9.5,1.0,32,"bass",["A3"],-1,null,""],[10.5,1.5,32,"bass",["A3"],-1,null,""],[12.0,1.5,31,"bass",["G3"],-1,null,""],[13.5,0.5,31,"bass",["G3"],-1,null,""],[14.0,1.5,31,"bass",["G3"],-1,null,""],[15.5,0.5,34,"bass",["B3"],-1,null,""],[0.0,0.5,72,"lead",["C5"],0,null,""],[0.5,0.5,72,"lead",["C5"],1,null,""],[1.25,0.25,72,"lead",["C5"],3,null,""],[1.5,0.5,67,"lead",["G4"],4,null,""],[2.0,0.5,68,"lead",["A4"],5,null,""],[3.0,0.5,67,"lead",["G4"],7,null,""],[3.5,0.5,63,"lead",["E4"],8,null,""],[4.0,0.5,72,"lead",["C5"],9,null,""],[4.5,0.5,72,"lead",["C5"],10,null,""],[5.25,0.25,72,"lead",["C5"],12,null,""],[5.5,0.5,67,"lead",["G4"],13,null,""],[6.0,0.5,68,"lead",["A4"],14,null,""],[7.0,0.5,67,"lead",["G4"],16,null,""],[7.5,0.5,63,"lead",["E4"],17,null,""],[8.0,0.5,72,"lead",["C5"],18,null,""],[8.5,0.5,72,"lead",["C5"],19,null,""],[9.25,0.25,72,"lead",["C5"],21,null,""],[9.5,0.5,67,"lead",["G4"],22,null,""],[10.0,0.5,68,"lead",["A4"],23,null,""],[11.0,0.5,67,"lead",["G4"],25,null,""],[11.5,0.5,63,"lead",["E4"],26,null,""],[12.0,0.5,72,"lead",["C5"],27,null,""],[12.5,0.5,72,"lead",["C5"],28,null,""],[13.25,0.25,72,"lead",["C5"],30,null,""],[13.5,0.5,67,"lead",["G4"],31,null,""],[14.0,0.5,68,"lead",["A4"],32,null,""],[15.0,0.5,70,"lead",["B4"],34,null,""],[15.5,0.5,72,"lead",["C5"],35,null,""]],"dr":[[0.0,1,0.8,"drums"],[1.5,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[5.5,1,0.8,"drums"],[6.0,1,0.8,"drums"],[7.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.5,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[13.5,1,0.8,"drums"],[14.0,1,0.8,"drums"],[15.5,1,0.8,"drums"],[2.0,3,0.8,"drums"],[6.0,3,0.8,"drums"],[10.0,3,0.8,"drums"],[14.0,3,0.8,"drums"],[2.0,4,0.8,"drums"],[6.0,4,0.8,"drums"],[10.0,4,0.8,"drums"],[14.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.8,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.25,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.8,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.8,"drums"],[6.583333333333333,5,0.8,"drums"],[6.666666666666667,5,0.8,"drums"],[7.0,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.8,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.25,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.8,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.8,"drums"],[14.583333333333334,5,0.8,"drums"],[14.666666666666666,5,0.8,"drums"],[15.0,5,0.8,"drums"],[7.5,6,0.8,"drums"],[15.5,6,0.8,"drums"]],"fx":{"kit":"trap","rev":0.25,"dly":0.15,"dist":2.2},"b808":true,"inst":{"lead":"fmbell","pad":"pad"},"aud":{"code":"О-1","name":"Трэп А колокольчик-хук","ch":"draft-varianty"}},{"type":"ev","bpm":145,"beats":16,"ev":[[0.0,1.5,36,"bass",["C4"],-1,null,""],[1.5,1.0,36,"bass",["C4"],-1,null,""],[2.5,1.5,36,"bass",["C4"],-1,null,""],[4.0,1.5,36,"bass",["C4"],-1,null,""],[5.5,0.5,36,"bass",["C4"],-1,null,""],[6.0,1.5,36,"bass",["C4"],-1,null,""],[7.5,0.5,36,"bass",["C4"],-1,null,""],[8.0,1.5,32,"bass",["A3"],-1,null,""],[9.5,1.0,32,"bass",["A3"],-1,null,""],[10.5,1.5,32,"bass",["A3"],-1,null,""],[12.0,1.5,31,"bass",["G3"],-1,null,""],[13.5,0.5,31,"bass",["G3"],-1,null,""],[14.0,1.5,31,"bass",["G3"],-1,null,""],[15.5,0.5,34,"bass",["B3"],-1,null,""],[0.0,0.5,60,"lead",["C4"],0,null,""],[0.5,0.5,72,"lead",["C5"],1,null,""],[1.0,0.5,67,"lead",["G4"],2,null,""],[1.5,0.5,72,"lead",["C5"],3,null,""],[2.0,0.5,60,"lead",["C4"],4,null,""],[2.5,0.5,72,"lead",["C5"],5,null,""],[3.0,0.5,70,"lead",["B4"],6,null,""],[3.5,0.5,67,"lead",["G4"],7,null,""],[4.0,0.5,60,"lead",["C4"],8,null,""],[4.5,0.5,72,"lead",["C5"],9,null,""],[5.0,0.5,67,"lead",["G4"],10,null,""],[5.5,0.5,72,"lead",["C5"],11,null,""],[6.0,0.5,60,"lead",["C4"],12,null,""],[6.5,0.5,72,"lead",["C5"],13,null,""],[7.0,0.5,70,"lead",["B4"],14,null,""],[7.5,0.5,67,"lead",["G4"],15,null,""],[8.0,0.5,56,"lead",["A3"],16,null,""],[8.5,0.5,68,"lead",["A4"],17,null,""],[9.0,0.5,63,"lead",["E4"],18,null,""],[9.5,0.5,68,"lead",["A4"],19,null,""],[10.0,0.5,56,"lead",["A3"],20,null,""],[10.5,0.5,68,"lead",["A4"],21,null,""],[11.0,0.5,67,"lead",["G4"],22,null,""],[11.5,0.5,63,"lead",["E4"],23,null,""],[12.0,0.5,55,"lead",["G3"],24,null,""],[12.5,0.5,67,"lead",["G4"],25,null,""],[13.0,0.5,62,"lead",["D4"],26,null,""],[13.5,0.5,67,"lead",["G4"],27,null,""],[14.0,0.5,55,"lead",["G3"],28,null,""],[14.5,0.5,67,"lead",["G4"],29,null,""],[15.0,0.5,70,"lead",["B4"],30,null,""],[15.5,0.5,68,"lead",["A4"],31,null,""]],"dr":[[0.0,1,0.8,"drums"],[1.5,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[5.5,1,0.8,"drums"],[6.0,1,0.8,"drums"],[7.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.5,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[13.5,1,0.8,"drums"],[14.0,1,0.8,"drums"],[15.5,1,0.8,"drums"],[2.0,3,0.8,"drums"],[6.0,3,0.8,"drums"],[10.0,3,0.8,"drums"],[14.0,3,0.8,"drums"],[2.0,4,0.8,"drums"],[6.0,4,0.8,"drums"],[10.0,4,0.8,"drums"],[14.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.8,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.25,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.8,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.8,"drums"],[6.583333333333333,5,0.8,"drums"],[6.666666666666667,5,0.8,"drums"],[7.0,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.8,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.25,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.8,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.8,"drums"],[14.583333333333334,5,0.8,"drums"],[14.666666666666666,5,0.8,"drums"],[15.0,5,0.8,"drums"],[7.5,6,0.8,"drums"],[15.5,6,0.8,"drums"]],"fx":{"kit":"trap","rev":0.3,"dist":2.2},"b808":true,"inst":{"lead":"darkpiano","pad":"pad"},"aud":{"code":"О-2","name":"Трэп Б мрачное пиано октавами","ch":"draft-varianty"}},{"type":"ev","bpm":145,"beats":16,"ev":[[0.0,1.5,36,"bass",["C4"],-1,null,""],[1.5,1.0,36,"bass",["C4"],-1,null,""],[2.5,1.5,36,"bass",["C4"],-1,null,""],[4.0,1.5,36,"bass",["C4"],-1,null,""],[5.5,0.5,36,"bass",["C4"],-1,null,""],[6.0,1.5,36,"bass",["C4"],-1,null,""],[7.5,0.5,36,"bass",["C4"],-1,null,""],[8.0,1.5,32,"bass",["A3"],-1,null,""],[9.5,1.0,32,"bass",["A3"],-1,null,""],[10.5,1.5,32,"bass",["A3"],-1,null,""],[12.0,1.5,31,"bass",["G3"],-1,null,""],[13.5,0.5,31,"bass",["G3"],-1,null,""],[14.0,1.5,31,"bass",["G3"],-1,null,""],[15.5,0.5,34,"bass",["B3"],-1,null,""],[0.0,0.25,72,"lead",["C5"],0,null,"'"],[0.5,0.25,72,"lead",["C5"],2,null,"'"],[1.0,0.5,75,"lead",["E5"],4,null,"!"],[1.5,0.5,74,"lead",["D5"],5,null,""],[2.0,0.25,72,"lead",["C5"],6,null,"'"],[2.5,0.5,67,"lead",["G4"],8,null,""],[3.5,0.5,68,"lead",["A4"],10,null,""],[4.0,0.25,72,"lead",["C5"],11,null,"'"],[4.5,0.25,72,"lead",["C5"],13,null,"'"],[5.0,0.5,75,"lead",["E5"],15,null,"!"],[5.5,0.5,74,"lead",["D5"],16,null,""],[6.0,0.25,72,"lead",["C5"],17,null,"'"],[6.5,0.5,67,"lead",["G4"],19,null,""],[7.5,0.5,68,"lead",["A4"],21,null,""],[8.0,0.25,72,"lead",["C5"],22,null,"'"],[8.5,0.25,72,"lead",["C5"],24,null,"'"],[9.0,0.5,75,"lead",["E5"],26,null,"!"],[9.5,0.5,74,"lead",["D5"],27,null,""],[10.0,0.25,72,"lead",["C5"],28,null,"'"],[10.5,0.5,67,"lead",["G4"],30,null,""],[11.5,0.5,68,"lead",["A4"],32,null,""],[12.0,0.25,72,"lead",["C5"],33,null,"'"],[12.5,0.25,72,"lead",["C5"],35,null,"'"],[13.0,0.5,75,"lead",["E5"],37,null,"!"],[13.5,0.5,74,"lead",["D5"],38,null,""],[14.0,0.5,72,"lead",["C5"],39,null,""],[14.5,1.0,79,"lead",["G5"],40,null,"!"]],"dr":[[0.0,1,0.8,"drums"],[1.5,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[5.5,1,0.8,"drums"],[6.0,1,0.8,"drums"],[7.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.5,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[13.5,1,0.8,"drums"],[14.0,1,0.8,"drums"],[15.5,1,0.8,"drums"],[2.0,3,0.8,"drums"],[6.0,3,0.8,"drums"],[10.0,3,0.8,"drums"],[14.0,3,0.8,"drums"],[2.0,4,0.8,"drums"],[6.0,4,0.8,"drums"],[10.0,4,0.8,"drums"],[14.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.8,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.25,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.8,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.8,"drums"],[6.583333333333333,5,0.8,"drums"],[6.666666666666667,5,0.8,"drums"],[7.0,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.8,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.25,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.8,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.8,"drums"],[14.583333333333334,5,0.8,"drums"],[14.666666666666666,5,0.8,"drums"],[15.0,5,0.8,"drums"],[7.5,6,0.8,"drums"],[15.5,6,0.8,"drums"]],"fx":{"kit":"trap","rev":0.2,"dly":0.2,"dist":2.2},"b808":true,"inst":{"lead":"supersaw","pad":"pad"},"aud":{"code":"О-3","name":"Трэп В писклявый синт","ch":"draft-varianty"}},{"type":"ev","bpm":76,"beats":16,"ev":[[0.0,1.75,33,"bass",["A3"],-1,null,""],[1.75,0.75,33,"bass",["A3"],-1,null,""],[2.5,1.5,33,"bass",["A3"],-1,null,""],[4.0,2.5,29,"bass",["F3"],-1,null,""],[6.5,1.5,29,"bass",["F3"],-1,null,""],[8.0,1.75,36,"bass",["C4"],-1,null,""],[9.75,0.75,36,"bass",["C4"],-1,null,""],[10.5,1.5,36,"bass",["C4"],-1,null,""],[12.0,2.5,31,"bass",["G3"],-1,null,""],[14.5,1.5,31,"bass",["G3"],-1,null,""],[0.0,0.25,45,"lead",["A3"],0,null,""],[0.25,0.25,52,"lead",["E4"],1,null,""],[0.5,0.25,57,"lead",["A4"],2,null,""],[0.75,0.25,59,"lead",["B4"],3,null,""],[1.0,0.25,60,"lead",["C5"],4,null,""],[1.25,0.25,57,"lead",["A4"],5,null,""],[1.5,0.25,52,"lead",["E4"],6,null,""],[1.75,0.25,57,"lead",["A4"],7,null,""],[2.0,0.25,45,"lead",["A3"],8,null,""],[2.25,0.25,52,"lead",["E4"],9,null,""],[2.5,0.25,57,"lead",["A4"],10,null,""],[2.75,0.25,59,"lead",["B4"],11,null,""],[3.0,0.25,60,"lead",["C5"],12,null,""],[3.25,0.25,57,"lead",["A4"],13,null,""],[3.5,0.25,52,"lead",["E4"],14,null,""],[3.75,0.25,57,"lead",["A4"],15,null,""],[4.0,0.25,41,"lead",["F3"],16,null,""],[4.25,0.25,48,"lead",["C4"],17,null,""],[4.5,0.25,53,"lead",["F4"],18,null,""],[4.75,0.25,55,"lead",["G4"],19,null,""],[5.0,0.25,57,"lead",["A4"],20,null,""],[5.25,0.25,53,"lead",["F4"],21,null,""],[5.5,0.25,48,"lead",["C4"],22,null,""],[5.75,0.25,53,"lead",["F4"],23,null,""],[6.0,0.25,41,"lead",["F3"],24,null,""],[6.25,0.25,48,"lead",["C4"],25,null,""],[6.5,0.25,53,"lead",["F4"],26,null,""],[6.75,0.25,55,"lead",["G4"],27,null,""],[7.0,0.25,57,"lead",["A4"],28,null,""],[7.25,0.25,53,"lead",["F4"],29,null,""],[7.5,0.25,48,"lead",["C4"],30,null,""],[7.75,0.25,53,"lead",["F4"],31,null,""],[8.0,0.25,48,"lead",["C4"],32,null,""],[8.25,0.25,55,"lead",["G4"],33,null,""],[8.5,0.25,60,"lead",["C5"],34,null,""],[8.75,0.25,62,"lead",["D5"],35,null,""],[9.0,0.25,64,"lead",["E5"],36,null,""],[9.25,0.25,60,"lead",["C5"],37,null,""],[9.5,0.25,55,"lead",["G4"],38,null,""],[9.75,0.25,60,"lead",["C5"],39,null,""],[10.0,0.25,48,"lead",["C4"],40,null,""],[10.25,0.25,55,"lead",["G4"],41,null,""],[10.5,0.25,60,"lead",["C5"],42,null,""],[10.75,0.25,62,"lead",["D5"],43,null,""],[11.0,0.25,64,"lead",["E5"],44,null,""],[11.25,0.25,60,"lead",["C5"],45,null,""],[11.5,0.25,55,"lead",["G4"],46,null,""],[11.75,0.25,60,"lead",["C5"],47,null,""],[12.0,0.25,43,"lead",["G3"],48,null,""],[12.25,0.25,50,"lead",["D4"],49,null,""],[12.5,0.25,55,"lead",["G4"],50,null,""],[12.75,0.25,57,"lead",["A4"],51,null,""],[13.0,0.25,59,"lead",["B4"],52,null,""],[13.25,0.25,55,"lead",["G4"],53,null,""],[13.5,0.25,50,"lead",["D4"],54,null,""],[13.75,0.25,55,"lead",["G4"],55,null,""],[14.0,0.25,43,"lead",["G3"],56,null,""],[14.25,0.25,50,"lead",["D4"],57,null,""],[14.5,0.25,55,"lead",["G4"],58,null,""],[14.75,0.25,57,"lead",["A4"],59,null,""],[15.0,0.25,59,"lead",["B4"],60,null,""],[15.25,0.25,55,"lead",["G4"],61,null,""],[15.5,0.25,50,"lead",["D4"],62,null,""],[15.75,0.25,55,"lead",["G4"],63,null,""]],"dr":[[0.0,1,0.8,"drums"],[1.75,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[6.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.75,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[14.5,1,0.8,"drums"],[1.0,3,0.8,"drums"],[3.0,3,0.8,"drums"],[5.0,3,0.8,"drums"],[7.0,3,0.8,"drums"],[9.0,3,0.8,"drums"],[11.0,3,0.8,"drums"],[13.0,3,0.8,"drums"],[15.0,3,0.8,"drums"],[1.0,4,0.8,"drums"],[3.0,4,0.8,"drums"],[5.0,4,0.8,"drums"],[7.0,4,0.8,"drums"],[9.0,4,0.8,"drums"],[11.0,4,0.8,"drums"],[13.0,4,0.8,"drums"],[15.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.5,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.5,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.5,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.5,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.5,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.5,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.5,"drums"],[7.0,5,0.8,"drums"],[7.083333333333333,5,0.8,"drums"],[7.166666666666667,5,0.8,"drums"],[7.5,5,0.5,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.5,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.5,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.5,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.5,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.5,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.5,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.5,"drums"],[15.0,5,0.8,"drums"],[15.083333333333334,5,0.8,"drums"],[15.166666666666666,5,0.8,"drums"],[15.5,5,0.5,"drums"]],"fx":{"kit":"trap","rev":0.45,"dist":0.7},"b808":true,"inst":{"lead":"steel","pad":"pad"},"aud":{"code":"О-4","name":"Эмо А акустический перебор","ch":"draft-varianty"}},{"type":"ev","bpm":76,"beats":16,"ev":[[0.0,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[0.5,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[1.0,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[1.5,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[2.0,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[2.5,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[3.0,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[3.5,0.5,[57,64,69],"pad",["A3","E4","A4"],-1],[4.0,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[4.5,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[5.0,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[5.5,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[6.0,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[6.5,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[7.0,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[7.5,0.5,[53,60,65],"pad",["F3","C4","F4"],-1],[8.0,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[8.5,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[9.0,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[9.5,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[10.0,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[10.5,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[11.0,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[11.5,0.5,[60,67,72],"pad",["C4","G4","C5"],-1],[12.0,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[12.5,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[13.0,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[13.5,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[14.0,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[14.5,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[15.0,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[15.5,0.5,[55,62,67],"pad",["G3","D4","G4"],-1],[0.0,1.75,33,"bass",["A3"],-1,null,""],[1.75,0.75,33,"bass",["A3"],-1,null,""],[2.5,1.5,33,"bass",["A3"],-1,null,""],[4.0,2.5,29,"bass",["F3"],-1,null,""],[6.5,1.5,29,"bass",["F3"],-1,null,""],[8.0,1.75,36,"bass",["C4"],-1,null,""],[9.75,0.75,36,"bass",["C4"],-1,null,""],[10.5,1.5,36,"bass",["C4"],-1,null,""],[12.0,2.5,31,"bass",["G3"],-1,null,""],[14.5,1.5,31,"bass",["G3"],-1,null,""]],"dr":[[0.0,1,0.8,"drums"],[1.75,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[6.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.75,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[14.5,1,0.8,"drums"],[1.0,3,0.8,"drums"],[3.0,3,0.8,"drums"],[5.0,3,0.8,"drums"],[7.0,3,0.8,"drums"],[9.0,3,0.8,"drums"],[11.0,3,0.8,"drums"],[13.0,3,0.8,"drums"],[15.0,3,0.8,"drums"],[1.0,4,0.8,"drums"],[3.0,4,0.8,"drums"],[5.0,4,0.8,"drums"],[7.0,4,0.8,"drums"],[9.0,4,0.8,"drums"],[11.0,4,0.8,"drums"],[13.0,4,0.8,"drums"],[15.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.5,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.5,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.5,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.5,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.5,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.5,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.5,"drums"],[7.0,5,0.8,"drums"],[7.083333333333333,5,0.8,"drums"],[7.166666666666667,5,0.8,"drums"],[7.5,5,0.5,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.5,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.5,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.5,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.5,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.5,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.5,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.5,"drums"],[15.0,5,0.8,"drums"],[15.083333333333334,5,0.8,"drums"],[15.166666666666666,5,0.8,"drums"],[15.5,5,0.5,"drums"]],"fx":{"kit":"trap","rev":0.3,"dist":0.7},"b808":true,"inst":{"lead":"lead","pad":"eguitar"},"aud":{"code":"О-5","name":"Эмо Б грязная электрогитара","ch":"draft-varianty"}},{"type":"ev","bpm":76,"beats":16,"ev":[[0.0,1.75,33,"bass",["A3"],-1,null,""],[1.75,0.75,33,"bass",["A3"],-1,null,""],[2.5,1.5,33,"bass",["A3"],-1,null,""],[4.0,2.5,29,"bass",["F3"],-1,null,""],[6.5,1.5,29,"bass",["F3"],-1,null,""],[8.0,1.75,36,"bass",["C4"],-1,null,""],[9.75,0.75,36,"bass",["C4"],-1,null,""],[10.5,1.5,36,"bass",["C4"],-1,null,""],[12.0,2.5,31,"bass",["G3"],-1,null,""],[14.5,1.5,31,"bass",["G3"],-1,null,""],[0.0,0.5,45,"lead",["A3"],0,null,""],[0.5,0.5,52,"lead",["E4"],1,null,""],[1.0,0.5,57,"lead",["A4"],2,null,""],[1.5,0.5,60,"lead",["C5"],3,null,""],[2.0,0.5,64,"lead",["E5"],4,null,""],[2.5,0.5,60,"lead",["C5"],5,null,""],[3.0,0.5,57,"lead",["A4"],6,null,""],[3.5,0.5,52,"lead",["E4"],7,null,""],[4.0,0.5,41,"lead",["F3"],8,null,""],[4.5,0.5,48,"lead",["C4"],9,null,""],[5.0,0.5,53,"lead",["F4"],10,null,""],[5.5,0.5,57,"lead",["A4"],11,null,""],[6.0,0.5,60,"lead",["C5"],12,null,""],[6.5,0.5,57,"lead",["A4"],13,null,""],[7.0,0.5,53,"lead",["F4"],14,null,""],[7.5,0.5,48,"lead",["C4"],15,null,""],[8.0,0.5,48,"lead",["C4"],16,null,""],[8.5,0.5,55,"lead",["G4"],17,null,""],[9.0,0.5,60,"lead",["C5"],18,null,""],[9.5,0.5,64,"lead",["E5"],19,null,""],[10.0,0.5,67,"lead",["G5"],20,null,""],[10.5,0.5,64,"lead",["E5"],21,null,""],[11.0,0.5,60,"lead",["C5"],22,null,""],[11.5,0.5,55,"lead",["G4"],23,null,""],[12.0,0.5,43,"lead",["G3"],24,null,""],[12.5,0.5,50,"lead",["D4"],25,null,""],[13.0,0.5,55,"lead",["G4"],26,null,""],[13.5,0.5,59,"lead",["B4"],27,null,""],[14.0,0.5,62,"lead",["D5"],28,null,""],[14.5,0.5,59,"lead",["B4"],29,null,""],[15.0,0.5,55,"lead",["G4"],30,null,""],[15.5,0.5,50,"lead",["D4"],31,null,""]],"dr":[[0.0,1,0.8,"drums"],[1.75,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[6.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[9.75,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[14.5,1,0.8,"drums"],[1.0,3,0.8,"drums"],[3.0,3,0.8,"drums"],[5.0,3,0.8,"drums"],[7.0,3,0.8,"drums"],[9.0,3,0.8,"drums"],[11.0,3,0.8,"drums"],[13.0,3,0.8,"drums"],[15.0,3,0.8,"drums"],[1.0,4,0.8,"drums"],[3.0,4,0.8,"drums"],[5.0,4,0.8,"drums"],[7.0,4,0.8,"drums"],[9.0,4,0.8,"drums"],[11.0,4,0.8,"drums"],[13.0,4,0.8,"drums"],[15.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.5,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.5,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.5,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.5,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.5,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.5,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.5,"drums"],[7.0,5,0.8,"drums"],[7.083333333333333,5,0.8,"drums"],[7.166666666666667,5,0.8,"drums"],[7.5,5,0.5,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.5,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.5,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.5,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.5,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.5,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.5,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.5,"drums"],[15.0,5,0.8,"drums"],[15.083333333333334,5,0.8,"drums"],[15.166666666666666,5,0.8,"drums"],[15.5,5,0.5,"drums"]],"fx":{"kit":"trap","rev":0.55,"vinyl":1,"dist":0.7,"tone":2600.0},"b808":true,"inst":{"lead":"guitar","pad":"pad"},"aud":{"code":"О-6","name":"Эмо В лоу-фай нейлон","ch":"draft-varianty"}},{"type":"ev","bpm":136,"beats":16,"ev":[[0.0,4.0,[60,63,67],"pad",["C4","D#4","G4"],-1],[4.0,4.0,[56,60,63],"pad",["G#3","C4","D#4"],-1],[8.0,4.0,[53,56,60],"pad",["F3","G#3","C4"],-1],[12.0,4.0,[55,59,62],"pad",["G3","B3","D4"],-1],[0.0,2.0,36,"bass",["C4"],-1,null,""],[2.0,0.5,36,"bass",["C4"],-1,null,""],[2.5,1.5,36,"bass",["C4"],-1,null,""],[4.0,1.5,32,"bass",["A3"],-1,null,""],[5.5,1.0,32,"bass",["A3"],-1,null,""],[6.5,1.0,32,"bass",["A3"],-1,null,""],[7.5,0.5,32,"bass",["A3"],-1,null,""],[8.0,2.0,29,"bass",["F3"],-1,null,""],[10.0,0.5,29,"bass",["F3"],-1,null,""],[10.5,1.5,29,"bass",["F3"],-1,null,""],[12.0,1.5,31,"bass",["G3"],-1,null,""],[13.5,1.0,31,"bass",["G3"],-1,null,""],[14.5,1.0,31,"bass",["G3"],-1,null,""],[15.5,0.5,35,"bass",["B3"],-1,null,""],[0.0,0.5,72,"lead",["C5"],0,null,"!"],[1.0,0.5,72,"lead",["C5"],2,null,""],[2.0,0.5,71,"lead",["B4"],4,null,"!"],[3.0,1.0,67,"lead",["G4"],6,null,""],[4.0,0.5,68,"lead",["A4"],7,null,"!"],[5.0,0.5,68,"lead",["A4"],9,null,""],[6.0,0.5,67,"lead",["G4"],11,null,"!"],[7.0,1.0,63,"lead",["E4"],13,null,""],[8.0,0.5,72,"lead",["C5"],14,null,"!"],[9.0,0.5,72,"lead",["C5"],16,null,""],[10.0,0.5,71,"lead",["B4"],18,null,"!"],[11.0,1.0,67,"lead",["G4"],20,null,""],[12.0,0.5,65,"lead",["F4"],21,null,"!"],[13.0,0.5,65,"lead",["F4"],23,null,""],[14.0,0.5,63,"lead",["E4"],25,null,"!"],[15.0,0.5,62,"lead",["D4"],27,null,""],[15.5,0.5,59,"lead",["B3"],28,null,""]],"dr":[[0.0,1,0.8,"drums"],[2.0,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.0,1,0.8,"drums"],[5.5,1,0.8,"drums"],[6.5,1,0.8,"drums"],[7.5,1,0.8,"drums"],[8.0,1,0.8,"drums"],[10.0,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.0,1,0.8,"drums"],[13.5,1,0.8,"drums"],[14.5,1,0.8,"drums"],[15.5,1,0.8,"drums"],[2.0,3,0.8,"drums"],[6.0,3,0.8,"drums"],[10.0,3,0.8,"drums"],[14.0,3,0.8,"drums"],[2.0,4,0.8,"drums"],[6.0,4,0.8,"drums"],[10.0,4,0.8,"drums"],[14.0,4,0.8,"drums"],[0.0,5,0.8,"drums"],[0.5,5,0.8,"drums"],[1.0,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.0,5,0.8,"drums"],[2.5,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.5,5,0.8,"drums"],[5.0,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.0,5,0.8,"drums"],[6.5,5,0.8,"drums"],[6.583333333333333,5,0.8,"drums"],[6.666666666666667,5,0.8,"drums"],[7.0,5,0.8,"drums"],[7.0625,5,0.8,"drums"],[7.125,5,0.8,"drums"],[7.1875,5,0.8,"drums"],[7.5,5,0.8,"drums"],[7.5625,5,0.8,"drums"],[7.625,5,0.8,"drums"],[7.6875,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.5,5,0.8,"drums"],[9.0,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.0,5,0.8,"drums"],[10.5,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.5,5,0.8,"drums"],[13.0,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.0,5,0.8,"drums"],[14.5,5,0.8,"drums"],[14.583333333333334,5,0.8,"drums"],[14.666666666666666,5,0.8,"drums"],[15.0,5,0.8,"drums"],[15.0625,5,0.8,"drums"],[15.125,5,0.8,"drums"],[15.1875,5,0.8,"drums"],[15.5,5,0.8,"drums"],[15.5625,5,0.8,"drums"],[15.625,5,0.8,"drums"],[15.6875,5,0.8,"drums"],[3.75,6,0.8,"drums"],[11.75,6,0.8,"drums"]],"fx":{"kit":"trap","rev":0.3,"dist":1.6},"b808":true,"inst":{"lead":"brass","pad":"strings"},"aud":{"code":"О-7","name":"Дрилл А Чикаго, медь","ch":"draft-varianty"}},{"type":"ev","bpm":142,"beats":16,"ev":[[0.0,2.5,36,"bass",["C4"],-1,48,""],[2.5,1.5,48,"bass",["C5"],-1,null,""],[4.5,2.75,36,"bass",["C4"],-1,null,""],[7.25,0.5,38,"bass",["D4"],-1,36,""],[7.75,0.25,36,"bass",["C4"],-1,null,""],[8.0,2.5,36,"bass",["C4"],-1,48,""],[10.5,1.5,48,"bass",["C5"],-1,null,""],[12.5,2.75,36,"bass",["C4"],-1,null,""],[15.25,0.5,38,"bass",["D4"],-1,36,""],[15.75,0.25,36,"bass",["C4"],-1,null,""],[0.0,0.3333333333333333,60,"lead",["C4"],0,null,""],[0.3333333333333333,0.3333333333333333,63,"lead",["E4"],1,null,""],[0.6666666666666666,0.3333333333333333,67,"lead",["G4"],2,null,""],[1.0,0.3333333333333333,71,"lead",["B4"],3,null,""],[1.3333333333333333,0.3333333333333333,67,"lead",["G4"],4,null,""],[1.6666666666666665,0.3333333333333333,63,"lead",["E4"],5,null,""],[1.9999999999999998,0.3333333333333333,72,"lead",["C5"],6,null,""],[2.333333333333333,0.3333333333333333,67,"lead",["G4"],7,null,""],[2.6666666666666665,0.3333333333333333,63,"lead",["E4"],8,null,""],[3.0,1.0,71,"lead",["B4"],9,null,""],[4.0,0.3333333333333333,68,"lead",["A4"],10,null,""],[4.333333333333333,0.3333333333333333,63,"lead",["E4"],11,null,""],[4.666666666666666,0.3333333333333333,60,"lead",["C4"],12,null,""],[4.999999999999999,0.3333333333333333,68,"lead",["A4"],13,null,""],[5.333333333333332,0.3333333333333333,63,"lead",["E4"],14,null,""],[5.666666666666665,0.3333333333333333,60,"lead",["C4"],15,null,""],[5.999999999999998,0.3333333333333333,67,"lead",["G4"],16,null,""],[6.333333333333331,0.3333333333333333,63,"lead",["E4"],17,null,""],[6.666666666666664,0.3333333333333333,60,"lead",["C4"],18,null,""],[6.999999999999997,1.0,59,"lead",["B3"],19,null,""],[7.999999999999997,0.3333333333333333,60,"lead",["C4"],20,null,""],[8.33333333333333,0.3333333333333333,63,"lead",["E4"],21,null,""],[8.666666666666664,0.3333333333333333,67,"lead",["G4"],22,null,""],[8.999999999999998,0.3333333333333333,71,"lead",["B4"],23,null,""],[9.333333333333332,0.3333333333333333,67,"lead",["G4"],24,null,""],[9.666666666666666,0.3333333333333333,63,"lead",["E4"],25,null,""],[10.0,0.3333333333333333,72,"lead",["C5"],26,null,""],[10.333333333333334,0.3333333333333333,67,"lead",["G4"],27,null,""],[10.666666666666668,0.3333333333333333,63,"lead",["E4"],28,null,""],[11.000000000000002,1.0,71,"lead",["B4"],29,null,""],[12.000000000000002,0.3333333333333333,67,"lead",["G4"],30,null,""],[12.333333333333336,0.3333333333333333,62,"lead",["D4"],31,null,""],[12.66666666666667,0.3333333333333333,59,"lead",["B3"],32,null,""],[13.000000000000004,0.3333333333333333,67,"lead",["G4"],33,null,""],[13.333333333333337,0.3333333333333333,62,"lead",["D4"],34,null,""],[13.666666666666671,0.3333333333333333,59,"lead",["B3"],35,null,""],[14.000000000000005,0.3333333333333333,68,"lead",["A4"],36,null,""],[14.33333333333334,0.3333333333333333,67,"lead",["G4"],37,null,""],[14.666666666666673,0.3333333333333333,65,"lead",["F4"],38,null,""],[15.000000000000007,1.0,62,"lead",["D4"],39,null,""]],"dr":[[0.0,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.5,1,0.8,"drums"],[7.25,1,0.8,"drums"],[8.0,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.5,1,0.8,"drums"],[15.25,1,0.8,"drums"],[2.0,3,1,"drums"],[4.75,3,0.5,"drums"],[6.0,3,1,"drums"],[7.5,3,0.22,"drums"],[10.0,3,1,"drums"],[12.75,3,0.5,"drums"],[14.0,3,1,"drums"],[15.5,3,0.22,"drums"],[0.0,5,0.8,"drums"],[0.75,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.25,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.75,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.25,5,0.8,"drums"],[7.0,5,0.8,"drums"],[7.25,5,0.8,"drums"],[7.375,5,0.8,"drums"],[7.5,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.75,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.25,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.75,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.25,5,0.8,"drums"],[15.0,5,0.8,"drums"],[15.25,5,0.8,"drums"],[15.375,5,0.8,"drums"],[15.5,5,0.8,"drums"]],"fx":{"kit":"drill","rev":0.3},"b808":true,"inst":{"lead":"darkpiano","pad":"pad"},"aud":{"code":"О-8","name":"Дрилл Б UK, пиано триолями","ch":"draft-varianty"}},{"type":"ev","bpm":142,"beats":16,"ev":[[0.0,2.5,36,"bass",["C4"],-1,48,""],[2.5,1.5,48,"bass",["C5"],-1,null,""],[4.5,2.75,36,"bass",["C4"],-1,null,""],[7.25,0.5,38,"bass",["D4"],-1,36,""],[7.75,0.25,36,"bass",["C4"],-1,null,""],[8.0,2.5,36,"bass",["C4"],-1,48,""],[10.5,1.5,48,"bass",["C5"],-1,null,""],[12.5,2.75,36,"bass",["C4"],-1,null,""],[15.25,0.5,38,"bass",["D4"],-1,36,""],[15.75,0.25,36,"bass",["C4"],-1,null,""],[0.0,0.6666666666666666,67,"lead",["G4"],0,null,""],[0.6666666666666666,0.3333333333333333,68,"lead",["A4"],1,null,""],[1.0,1.0,67,"lead",["G4"],2,null,""],[2.0,1.0,63,"lead",["E4"],3,null,""],[3.0,1.0,62,"lead",["D4"],4,null,""],[4.0,1.0,60,"lead",["C4"],5,null,""],[5.0,1.0,59,"lead",["B3"],6,null,""],[6.0,2.0,60,"lead",["C4"],7,null,""],[8.0,0.6666666666666666,67,"lead",["G4"],8,null,""],[8.666666666666666,0.3333333333333333,68,"lead",["A4"],9,null,""],[9.0,1.0,67,"lead",["G4"],10,null,""],[10.0,1.0,63,"lead",["E4"],11,null,""],[11.0,1.0,62,"lead",["D4"],12,null,""],[12.0,0.6666666666666666,67,"lead",["G4"],13,null,""],[12.666666666666666,0.3333333333333333,68,"lead",["A4"],14,null,""],[13.0,1.0,71,"lead",["B4"],15,null,""],[14.0,1.0,68,"lead",["A4"],16,null,""],[15.0,1.0,67,"lead",["G4"],17,null,""]],"dr":[[0.0,1,0.8,"drums"],[2.5,1,0.8,"drums"],[4.5,1,0.8,"drums"],[7.25,1,0.8,"drums"],[8.0,1,0.8,"drums"],[10.5,1,0.8,"drums"],[12.5,1,0.8,"drums"],[15.25,1,0.8,"drums"],[2.0,3,1,"drums"],[4.75,3,0.5,"drums"],[6.0,3,1,"drums"],[7.5,3,0.22,"drums"],[10.0,3,1,"drums"],[12.75,3,0.5,"drums"],[14.0,3,1,"drums"],[15.5,3,0.22,"drums"],[0.0,5,0.8,"drums"],[0.75,5,0.8,"drums"],[1.5,5,0.8,"drums"],[2.25,5,0.8,"drums"],[3.0,5,0.8,"drums"],[3.5,5,0.8,"drums"],[4.0,5,0.8,"drums"],[4.75,5,0.8,"drums"],[5.5,5,0.8,"drums"],[6.25,5,0.8,"drums"],[7.0,5,0.8,"drums"],[7.25,5,0.8,"drums"],[7.375,5,0.8,"drums"],[7.5,5,0.8,"drums"],[8.0,5,0.8,"drums"],[8.75,5,0.8,"drums"],[9.5,5,0.8,"drums"],[10.25,5,0.8,"drums"],[11.0,5,0.8,"drums"],[11.5,5,0.8,"drums"],[12.0,5,0.8,"drums"],[12.75,5,0.8,"drums"],[13.5,5,0.8,"drums"],[14.25,5,0.8,"drums"],[15.0,5,0.8,"drums"],[15.25,5,0.8,"drums"],[15.375,5,0.8,"drums"],[15.5,5,0.8,"drums"]],"fx":{"kit":"drill","rev":0.35,"tone":3500.0},"b808":true,"inst":{"lead":"guitar","pad":"pad"},"aud":{"code":"О-9","name":"Дрилл В UK, гитара триолями","ch":"draft-varianty"}}];
+document.documentElement.classList.add('js');
+
+/* ---------- theme ---------- */
+(function () {
+  const root = document.documentElement;
+  let saved = null;
+  try { saved = localStorage.getItem('sloop-theme'); } catch (e) {}
+  if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('sloop-theme', root.dataset.theme); } catch (e) {}
+  });
+})();
+
+/* ---------- chapters ---------- */
+const sections = [...document.querySelectorAll('section.chapter')];
+const legendTpl = document.getElementById('legendTpl');
+sections.forEach(s => {
+  if (!s.querySelector('figure.grid-wrap')) return;
+  const h1 = s.querySelector('h1');
+  const lg = legendTpl.content.firstElementChild.cloneNode(true);
+  if (h1) h1.after(lg); else s.prepend(lg);
+});
+const chaps = [...document.querySelectorAll('nav.side li.chap')];
+sections.forEach((s, i) => {
+  const pg = document.createElement('div');
+  pg.className = 'pager';
+  const prev = sections[i - 1], next = sections[i + 1];
+  const name = (sec) => chaps.find(c => c.dataset.sec === sec.id).querySelector('a').textContent;
+  pg.innerHTML = (prev ? `<a href="#${prev.id}"><small>← назад</small>${name(prev)}</a>` : '<span></span>') +
+                 (next ? `<a href="#${next.id}" style="text-align:right"><small>дальше →</small>${name(next)}</a>` : '<span></span>');
+  s.appendChild(pg);
+});
+function route() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  const el = id ? document.getElementById(id) : null;
+  const sec = el ? (el.closest('section.chapter') || sections[0]) : sections[0];
+  sections.forEach(s => s.classList.toggle('shown', s === sec));
+  chaps.forEach(c => c.classList.toggle('active', c.dataset.sec === sec.id));
+  document.body.classList.remove('menu-open');
+  if (el && el !== sec) el.scrollIntoView();
+  else window.scrollTo(0, 0);
+  const a = chaps.find(c => c.dataset.sec === sec.id);
+  if (a) a.scrollIntoView({ block: 'nearest' });
+}
+window.addEventListener('hashchange', route);
+route();
+document.getElementById('noSoundClose').addEventListener('click', () => { document.getElementById('noSound').hidden = true; });
+document.getElementById('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('menu-open'));
+
+/* ---------- audio ---------- */
+let ac = null, out = null, noiseBuf = null, ohat = null;
+let dst = null, BUS = null, KIT = null, crackBuf = null;      // dst: where the voice being played goes
+function buildBus() {
+  /* master: limiter; four buses (drums, bass, lead, pad) with sends to a reverb and a tempo delay */
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value = -12; comp.ratio.value = 12; comp.knee.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
+  out = ac.createGain(); out.gain.value = 0.6;
+  out.connect(comp); comp.connect(ac.destination);
+  const sr = ac.sampleRate;
+  noiseBuf = ac.createBuffer(1, sr * 1.5, sr);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const ir = ac.createBuffer(1, Math.floor(sr * 2.4), sr), r = ir.getChannelData(0);
+  let lp = 0;                                                     // a dark, smooth room: filtered decaying noise
+  for (let i = 0; i < r.length; i++) { lp += 0.35 * ((Math.random() * 2 - 1) - lp); r[i] = lp * Math.pow(1 - i / r.length, 2.6); }
+  const rev = ac.createConvolver(); rev.buffer = ir;
+  const revIn = ac.createGain(); revIn.gain.value = 0.9; revIn.connect(rev); rev.connect(out);
+  const dly = ac.createDelay(2), fb = ac.createGain(), dlp = ac.createBiquadFilter(), dlyIn = ac.createGain();
+  dlp.type = 'lowpass'; dlp.frequency.value = 3200; fb.gain.value = 0.32;
+  dlyIn.connect(dly); dly.connect(dlp); dlp.connect(fb); fb.connect(dly); dlp.connect(out); dlp.connect(revIn);
+  BUS = { rev: revIn, dly, dlyIn };
+  for (const k of ['drums', 'bass', 'lead', 'pad']) {
+    const g = ac.createGain(); g.connect(out);
+    const rs = ac.createGain(); rs.gain.value = 0; g.connect(rs); rs.connect(revIn);
+    const ds = ac.createGain(); ds.gain.value = 0; g.connect(ds); ds.connect(dlyIn);
+    BUS[k] = g; BUS[k + 'Rev'] = rs; BUS[k + 'Dly'] = ds;
+  }
+  const dlpf = ac.createBiquadFilter(); dlpf.type = 'lowpass'; dlpf.frequency.value = 20000;   // a dusty kit darkens here
+  BUS.drums.disconnect(); BUS.drums.connect(dlpf); dlpf.connect(out); dlpf.connect(BUS.drumsRev); dlpf.connect(BUS.drumsDly);
+  BUS.drumsTone = dlpf;
+  const llp = ac.createBiquadFilter(); llp.type = 'lowpass'; llp.frequency.value = 20000; llp.Q.value = 0.5;   // a dark lead: set per example
+  BUS.lead.disconnect(); BUS.lead.connect(llp); llp.connect(out); llp.connect(BUS.leadRev); llp.connect(BUS.leadDly);
+  BUS.leadTone = llp;
+  dst = BUS.lead; KIT = DRUM; ohat = null; shaper = null; KS = {};
+  crackBuf = ac.createBuffer(1, sr * 2, sr);                     // vinyl: sparse clicks over a soft hiss
+  const c = crackBuf.getChannelData(0);
+  for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * 0.012 + (Math.random() < 0.0009 ? (Math.random() * 2 - 1) * 0.7 : 0);
+}
+function audio() {
+  if (ac) return ac;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone: play with the silent switch on
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  buildBus();
+  return ac;
+}
+/* an example's sound: its kit, how much reverb and echo; set from the time it starts */
+function applyFx(p, t) {
+  const fx = p.fx || {}, set = (n, v) => { BUS[n].gain.cancelScheduledValues(t); BUS[n].gain.setValueAtTime(v, t); };
+  const rev = fx.rev != null ? fx.rev : 0.12;
+  set('leadRev', rev); set('padRev', rev * 1.3); set('drumsRev', fx.drev != null ? fx.drev : 0.05); set('bassRev', 0);
+  set('bass', fx.dist > 1 ? Math.pow(fx.dist, -0.6) : 1);          // a driven 808 is louder: bring it back
+  set('leadDly', fx.dly || 0); set('padDly', 0); set('drumsDly', fx.ddly || 0); set('bassDly', 0);
+  BUS.dly.delayTime.setValueAtTime(Math.min(1.9, 60 / p.bpm * 0.75), t);       // a dotted eighth
+  KIT = KITS[fx.kit] || DRUM;
+  BUS.drumsTone.frequency.setValueAtTime(fx.kit === 'boom' ? 7000 : 20000, t);
+  BUS.leadTone.frequency.setValueAtTime(fx.tone || 20000, t);
+}
+function vinyl(t, dur) {
+  const s = ac.createBufferSource(); s.buffer = crackBuf; s.loop = true;
+  const g = ac.createGain(); g.gain.value = 0.5; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
+  s.connect(hp); hp.connect(g); g.connect(out); s.start(t); s.stop(t + dur);
+}
+function env(g, t, vol, dur, atk = 0.002) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(vol, 0.0002), t + atk);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+function noise(t, dur, vol, type, freq, q = 0.8) {
+  const s = ac.createBufferSource(); s.buffer = noiseBuf;
+  const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = ac.createGain(); env(g, t, vol, dur);
+  s.connect(f); f.connect(g); g.connect(dst);
+  s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  return g;
+}
+function tone(t, f0, f1, dur, vol, type = 'sine', bend = 0.06) {
+  const o = ac.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(f1, 20), t + bend);
+  const g = ac.createGain(); env(g, t, vol, dur);
+  o.connect(g); g.connect(dst); o.start(t); o.stop(t + dur + 0.05);
+  return g;
+}
+function choke(t) { if (ohat) { try { ohat.gain.cancelScheduledValues(t); ohat.gain.setTargetAtTime(0.0001, t, 0.01); } catch (e) {} ohat = null; } }
+const DRUM = {
+  1: (t, v) => tone(t, 160, 48, 0.42, v, 'sine', 0.09),
+  2: (t, v) => tone(t, 200, 62, 0.24, v * 0.9, 'sine', 0.05),
+  3: (t, v) => { tone(t, 240, 170, 0.11, v * 0.45, 'triangle', 0.03); noise(t, 0.17, v * 0.7, 'highpass', 1600); },
+  4: (t, v) => { [0, 0.011, 0.022].forEach(o => noise(t + o, 0.02, v * 0.6, 'bandpass', 1300, 1.2)); noise(t + 0.03, 0.16, v * 0.5, 'bandpass', 1200, 1.2); },
+  5: (t, v) => { choke(t); noise(t, 0.045, v * 0.42, 'highpass', 7500); },
+  6: (t, v) => { choke(t); ohat = noise(t, 0.38, v * 0.36, 'highpass', 6500); },
+  7: (t, v) => { choke(t); noise(t, 0.06, v * 0.3, 'highpass', 5000); },
+  8: (t, v) => { tone(t, 1700, 1500, 0.03, v * 0.35, 'square', 0.01); tone(t, 480, 400, 0.05, v * 0.4, 'triangle', 0.01); },
+  9: (t, v) => { tone(t, 330, 250, 0.08, v * 0.35, 'triangle', 0.02); noise(t, 0.12, v * 0.55, 'bandpass', 3200, 0.7); },
+  10: (t, v) => tone(t, 150, 95, 0.36, v * 0.8, 'sine', 0.12),
+  11: (t, v) => tone(t, 230, 155, 0.26, v * 0.75, 'sine', 0.1),
+  12: (t, v) => noise(t, 1.3, v * 0.38, 'highpass', 4200, 0.5),
+  13: (t, v) => { noise(t, 0.55, v * 0.18, 'bandpass', 7800, 1.5); tone(t, 5200, 5100, 0.4, v * 0.05, 'square', 0.1); },
+  14: (t, v) => noise(t, 0.07, v * 0.28, 'highpass', 9000),
+  15: (t, v) => tone(t, 360, 290, 0.2, v * 0.7, 'sine', 0.03),
+  16: (t, v) => { [545, 815].forEach(f => { const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = f; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2; const g = ac.createGain(); env(g, t, v * 0.22, 0.26); o.connect(bp); bp.connect(g); g.connect(dst); o.start(t); o.stop(t + 0.3); }); },
+};
+
+/* genre kits: the lanes of the FM-1 kit, built like the classic machines (808 / trap, dusty boom-bap) */
+function metal(t, dur, vol, hp = 7000) {          // the 808's cymbal: six square waves through a band-pass
+  const g = ac.createGain(); env(g, t, vol, dur, 0.001);
+  const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 10000; bp.Q.value = 0.9;
+  const h = ac.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp;
+  bp.connect(h); h.connect(g); g.connect(dst);
+  [205.3, 304.4, 369.6, 522.7, 540, 800].forEach(f => osc('square', f * 1.68, t, t + dur + 0.05, bp));
+  return g;
+}
+function kick808(t, v, f0, f1, dur, click) {
+  const o = ac.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + 0.05);
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.002);
+  g.gain.setTargetAtTime(0.0001, t + 0.03, dur / 4);
+  o.connect(g); g.connect(dst); o.start(t); o.stop(t + dur + 0.1);
+  if (click) noise(t, 0.012, v * click, 'highpass', 2500);
+}
+function clap(t, v, f = 1400, tail = 0.22) {
+  [0, 0.009, 0.019, 0.028].forEach(o => noise(t + o, 0.012, v * 0.75, 'bandpass', f, 1.4));
+  noise(t + 0.03, tail, v * 0.6, 'bandpass', f * 0.9, 1.1);
+}
+const KITS = {
+  trap: Object.assign({}, DRUM, {
+    1: (t, v) => kick808(t, v * 1.05, 170, 52, 0.32, 0.25),
+    2: (t, v) => kick808(t, v, 120, 40, 1.4, 0.15),                       // KICK 2: the long 808
+    3: (t, v) => { tone(t, 230, 180, 0.08, v * 0.35, 'triangle', 0.02); noise(t, 0.16, v * 0.75, 'highpass', 1900); clap(t, v * 0.45); },
+    4: (t, v) => clap(t, v * 1.05),
+    5: (t, v) => { choke(t); metal(t, 0.035 + v * 0.03, v * 0.5); },
+    6: (t, v) => { choke(t); ohat = metal(t, 0.42, v * 0.42, 6500); },
+    7: (t, v) => { choke(t); metal(t, 0.05, v * 0.22); },
+    8: (t, v) => { tone(t, 1900, 1700, 0.02, v * 0.3, 'square', 0.005); noise(t, 0.02, v * 0.3, 'bandpass', 4000, 2); },
+    9: (t, v) => { noise(t, 0.12, v * 0.7, 'highpass', 2600); tone(t, 330, 260, 0.05, v * 0.3, 'triangle', 0.02); },
+    12: (t, v) => { metal(t, 1.2, v * 0.22, 5000); noise(t, 1.0, v * 0.25, 'highpass', 6000, 0.5); },
+  }),
+  drill: null,                                   // filled below: trap with a tight, high "drill" snare
+  boom: Object.assign({}, DRUM, {
+    1: (t, v) => { kick808(t, v * 1.1, 130, 50, 0.3, 0.4); tone(t, 90, 60, 0.12, v * 0.35, 'triangle', 0.04); },
+    3: (t, v) => { tone(t, 200, 165, 0.12, v * 0.55, 'triangle', 0.03); noise(t, 0.2, v * 0.8, 'bandpass', 2300, 0.6); noise(t, 0.05, v * 0.4, 'highpass', 5000); },
+    4: (t, v) => clap(t, v * 0.9, 1200, 0.18),
+    5: (t, v) => { choke(t); noise(t, 0.05, v * 0.36, 'bandpass', 8000, 0.9); },
+    6: (t, v) => { choke(t); ohat = noise(t, 0.3, v * 0.3, 'bandpass', 7500, 0.8); },
+    8: (t, v) => { tone(t, 1500, 1300, 0.025, v * 0.3, 'square', 0.006); noise(t, 0.03, v * 0.35, 'bandpass', 2500, 2); },
+  }),
+};
+KITS.drill = Object.assign({}, KITS.trap, {
+  3: (t, v) => { tone(t, 380, 300, 0.05, v * 0.4, 'triangle', 0.015); noise(t, 0.11, v * 0.8, 'bandpass', 3400, 0.8); clap(t, v * 0.3, 1800, 0.12); },
+  9: (t, v) => { noise(t, 0.07, v * 0.7, 'bandpass', 4200, 1.2); tone(t, 420, 360, 0.03, v * 0.3, 'triangle', 0.01); },
+});
+const LV = { g: 0.22, x: 0.5, X: 0.8, O: 1.0, '2': 0.8, '3': 0.8, '4': 0.8 };
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+function synthNote(t, midi, dur, vol, bass, slideTo, slideAt) {
+  const f = ac.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(bass ? 900 : 3200, t); f.frequency.exponentialRampToValueAtTime(bass ? 380 : 1600, t + Math.min(dur, 0.5));
+  f.Q.value = bass ? 3 : 0.7;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+  g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.01, dur - 0.04));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.06);
+  f.connect(g); g.connect(dst);
+  const types = bass ? ['sawtooth', 'sine'] : ['triangle', 'square'];
+  const mix = bass ? [0.5, 0.8] : [0.8, 0.12];
+  types.forEach((ty, i) => {
+    const o = ac.createOscillator(); o.type = ty;
+    const fr = mtof(midi) * (bass && i === 1 ? 0.5 : 1);
+    o.frequency.setValueAtTime(fr, t);
+    if (slideTo != null) {
+      o.frequency.setValueAtTime(fr, slideAt - 0.06);
+      o.frequency.exponentialRampToValueAtTime(mtof(slideTo) * (bass && i === 1 ? 0.5 : 1), slideAt);
+    }
+    if (!bass && i === 1) o.detune.value = 7;
+    const og = ac.createGain(); og.gain.value = mix[i];
+    o.connect(og); og.connect(f); o.start(t); o.stop(t + dur + 0.1);
+  });
+}
+
+/* ---------- sequencer ---------- */
+let cur = null;
+function stepDur(p, i) {
+  const base = 60 / p.bpm / p.spb;
+  if ((p.spb === 4 || p.spb === 2) && p.swing > 50) {
+    const s = Math.min(p.swing, 75) / 100;
+    return i % 2 === 0 ? base * 2 * s : base * 2 * (1 - s);
+  }
+  return base;
+}
+function schedule(p, i, t, fill) {
+  if (p.type === 'drum') {
+    const c = p.cond ? p.cond[i] : null;
+    if (c === 'F' && !fill) return;
+    if (c === 'N' && fill) return;
+    const d = stepDur(p, i);
+    dst = BUS.drums;
+    for (const ln of Object.keys(p.lanes).map(Number).sort((a, b) => a - b)) {
+      const ch = p.lanes[ln][i];
+      if (!ch || ch === '.' || ch === '-') continue;
+      const v = LV[ch] || 0.8;
+      const n = /[234]/.test(ch) ? +ch : 1;
+      const dr = KIT[ln] || DRUM[ln];
+      for (let k = 0; k < n; k++) dr && dr(t + k * d / n, v);
+    }
+  } else {
+    dst = p.bass ? BUS.bass : BUS.lead;
+    for (const vc of p.voices) {
+      const m = vc.notes[i];
+      if (typeof m !== 'number') continue;
+      let len = stepDur(p, i), j = (i + 1) % p.len, steps = 1;
+      while (steps < p.len && vc.notes[j] === '-') { len += stepDur(p, j); j = (j + 1) % p.len; steps++; }
+      const fl = vc.flags[i] || '.';
+      let slideTo = null, slideAt = 0;
+      if ((fl === 'S' || fl === 'B') && typeof vc.notes[j] === 'number') {
+        slideTo = vc.notes[j]; slideAt = t + len; len += stepDur(p, j) * 0.9;
+      }
+      const vol = (p.bass ? 0.36 : 0.4) * (fl === 'A' || fl === 'B' ? 1.3 : 1);
+      synthNote(t, m, Math.max(0.05, len * (slideTo != null ? 1 : 0.92)), vol, p.bass, slideTo, slideAt);
+    }
+  }
+}
+function highlight(fig, i) {
+  fig.querySelectorAll('.now').forEach(e => e.classList.remove('now'));
+  if (i == null) return;
+  fig.querySelectorAll(`[data-s="${i}"]`).forEach(e => e.classList.add('now'));
+}
+function stop() {
+  if (!cur) return;
+  clearInterval(cur.timer); cancelAnimationFrame(cur.raf);
+  highlight(cur.fig, null); lightClear();
+  cur.btn.classList.remove('on'); cur.btn.querySelector('.ico').textContent = '▶'; cur.btn.querySelector('.txt').textContent = 'Слушать';
+  cur = null;
+}
+function soundCheck() {
+  setTimeout(() => {
+    if (ac && ac.state !== 'running') document.getElementById('noSound').hidden = false;
+  }, 900);
+}
+function start(btn) {
+  const pid = +btn.dataset.pid, p = PATTERNS[pid];
+  const fig = btn.closest('figure');
+  stop();
+  try { audio(); ac.resume(); } catch (e) { document.getElementById('noSound').hidden = false; return; }
+  soundCheck();
+  if (p.type === 'ev') {
+    startEv(btn, p, fig);
+    btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
+    return;
+  }
+  const fillBox = fig.querySelector('input[data-fill]');
+  cur = { p, fig, btn, step: 0, next: ac.currentTime + 0.08, queue: [] };
+  applyFx(p, cur.next);
+  btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
+  const me = cur;
+  me.timer = setInterval(() => {
+    while (me.next < ac.currentTime + 0.12) {
+      schedule(p, me.step, me.next, fillBox && fillBox.checked);
+      me.queue.push([me.step, me.next]);
+      me.next += stepDur(p, me.step);
+      me.step = (me.step + 1) % p.len;
+    }
+  }, 25);
+  const draw = () => {
+    if (cur !== me) return;
+    let last = null;
+    while (me.queue.length && me.queue[0][1] <= ac.currentTime) last = me.queue.shift()[0];
+    if (last != null) highlight(fig, last);
+    me.raf = requestAnimationFrame(draw);
+  };
+  me.raf = requestAnimationFrame(draw);
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button.play');
+  if (!btn) return;
+  if (cur && cur.btn === btn) stop(); else start(btn);
+});
+
+/* ---------- course player: melodies, chords, loops ---------- */
+let shaper = null;
+function sub808(t, midi, dur, vol, slideTo, slideAt) {
+  if (!shaper) {
+    shaper = ac.createWaveShaper();
+    const c = new Float32Array(1024);
+    for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(2.2 * x); }
+    shaper.curve = c; shaper.connect(BUS.bass);
+  }
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+  g.gain.setTargetAtTime(vol * 0.55, t + 0.05, 0.25);
+  g.gain.setValueAtTime(vol * 0.5, t + Math.max(0.06, dur - 0.05));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.08);
+  g.connect(shaper);
+  const o = ac.createOscillator(); o.type = 'sine';
+  const f = mtof(midi);
+  o.frequency.setValueAtTime(f * 2.2, t);
+  o.frequency.exponentialRampToValueAtTime(f, t + 0.035);
+  if (slideTo != null) {
+    o.frequency.setValueAtTime(f, slideAt - 0.09);
+    o.frequency.exponentialRampToValueAtTime(mtof(slideTo), slideAt);
+  }
+  o.connect(g); o.start(t); o.stop(t + dur + 0.12);
+}
+/* instruments for the course and genre examples: a rough idea of the FM-1 preset, not its sound */
+function osc(type, f, t, end, dest, det) {
+  const o = ac.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det;
+  o.connect(dest); o.start(t); o.stop(end); return o;
+}
+function decayEnv(t, vol, dur, tail, release) {
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+  g.gain.setTargetAtTime(vol * 0.0005, t + 0.01, tail);        // the note dies away on its own...
+  g.gain.setTargetAtTime(0.0001, t + dur, release);              // ...or stops when the key comes up
+  return g;
+}
+
+let KS = {};
+function ksBuffer(midi, bright, decay) {           // a plucked string (Karplus-Strong), made once a note
+  const key = midi + ':' + bright;
+  if (KS[key]) return KS[key];
+  const sr = ac.sampleRate, n = Math.max(2, Math.round(sr / mtof(midi) - 0.5)), len = Math.floor(sr * 3.2);
+  const b = ac.createBuffer(1, len, sr), y = b.getChannelData(0);
+  let lp = 0;
+  for (let i = 0; i < n; i++) { lp += bright * ((Math.random() * 2 - 1) - lp); y[i] = lp; }
+  for (let i = n + 1; i < len; i++) y[i] = decay * 0.5 * (y[i - n] + y[i - n - 1]);
+  let pk = 0; for (let i = 0; i < len; i++) pk = Math.max(pk, Math.abs(y[i]));
+  for (let i = 0; i < len; i++) y[i] /= pk || 1;
+  return (KS[key] = b);
+}
+function voice(kind, t, midi, dur, vol) {
+  const f = mtof(midi), end = t + dur + 1.2;
+  if (kind === 'cowbell') {                      // the drift-phonk melody: a pitched 808 cowbell
+    const g = ac.createGain(); env(g, t, vol * 1.15, Math.min(0.35, dur + 0.15), 0.001);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 1.9; bp.Q.value = 1.6;
+    bp.connect(g); g.connect(dst);
+    osc('square', f, t, t + 0.5, bp); osc('square', f * 1.48, t, t + 0.5, bp);
+    return;
+  }
+  if (kind === 'supersaw') {                     // SUPERSAW: seven detuned saws, wide and loud
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.32, t + 0.008);
+    g.gain.setValueAtTime(vol * 0.29, t + Math.max(0.02, dur - 0.04)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.12);
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 160;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500;
+    hp.connect(lp); lp.connect(g); g.connect(dst);
+    [-32, -19, -8, 0, 8, 19, 32].forEach(d => osc('sawtooth', f, t, t + dur + 0.2, hp, d));
+    const o8 = ac.createGain(); o8.gain.value = 0.35; o8.connect(hp); osc('sawtooth', f * 2, t, t + dur + 0.2, o8, 5);
+    return;
+  }
+  if (kind === 'vox') {                          // a chopped vocal "ah": the choir with a fast attack
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.8, t + 0.008);
+    g.gain.setValueAtTime(vol * 0.7, t + Math.max(0.02, dur - 0.03)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+    g.connect(dst); const src = ac.createGain();
+    [[750, 1], [1200, 0.6], [2700, 0.3]].forEach(([fr, a]) => { const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = 4; const ag = ac.createGain(); ag.gain.value = a * 2.4; src.connect(bp); bp.connect(ag); ag.connect(g); });
+    [-6, 6].forEach(dt => osc('sawtooth', f, t, t + dur + 0.1, src, dt));
+    return;
+  }
+  if (kind === 'darkpiano') {                   // GRAND PNO played soft in a dark room: the trap / drill piano
+    const g = decayEnv(t, vol * 0.95, dur, 1.4, 0.25);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(Math.min(2600, f * 4), t); lp.frequency.setTargetAtTime(Math.min(1200, f * 2), t, 0.5);
+    lp.connect(g); g.connect(dst);
+    osc('triangle', f, t, end, lp); osc('triangle', f, t, end, lp, 6);
+    const h = ac.createGain(); h.gain.value = 0.25; h.connect(lp); osc('sine', f * 2, t, end, h, -3);
+    const sub = ac.createGain(); sub.gain.value = 0.3; sub.connect(g); osc('sine', f / 2, t, end, sub);
+    return;
+  }
+  if (kind === 'eguitar') {                      // a dirty electric guitar: the string through an amp
+    const sb = ac.createBufferSource(); sb.buffer = ksBuffer(midi, 0.7, 0.999);
+    const pre = ac.createGain(); pre.gain.value = 6;
+    const sh = ac.createWaveShaper(); const c = new Float32Array(1024);
+    for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(3 * x); } sh.curve = c;
+    const cab = ac.createBiquadFilter(); cab.type = 'lowpass'; cab.frequency.value = 3200; cab.Q.value = 0.8;
+    const mid = ac.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 900; mid.gain.value = 3;
+    const g = ac.createGain(); g.gain.setValueAtTime(vol * 0.42, t); g.gain.setTargetAtTime(0.0001, t + dur, 0.06);
+    sb.connect(pre); pre.connect(sh); sh.connect(mid); mid.connect(cab); cab.connect(g); g.connect(dst);
+    sb.start(t); sb.stop(t + Math.min(3.1, dur + 0.4));
+    return;
+  }
+  if (kind === 'brass') {                        // orchestral synth brass: a filter that opens on every note
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.03);
+    g.gain.setValueAtTime(vol * 0.42, t + Math.max(0.04, dur - 0.05)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.15);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.2;
+    lp.frequency.setValueAtTime(f * 1.5, t); lp.frequency.exponentialRampToValueAtTime(Math.min(6000, f * 7), t + 0.06);
+    lp.frequency.setTargetAtTime(Math.min(3000, f * 3.5), t + 0.08, 0.2);
+    lp.connect(g); g.connect(dst);
+    [-10, 0, 10].forEach(d => osc('sawtooth', f, t, t + dur + 0.3, lp, d));
+    const low = ac.createGain(); low.gain.value = 0.5; low.connect(lp); osc('sawtooth', f / 2, t, t + dur + 0.3, low);
+    return;
+  }
+  if (kind === 'guitar' || kind === 'steel') {   // NYLON GTR / STEEL GTR: a modelled string
+    const sb = ac.createBufferSource(); sb.buffer = ksBuffer(midi, kind === 'steel' ? 0.6 : 0.3, kind === 'steel' ? 0.9985 : 0.997);
+    const g = ac.createGain(); g.gain.setValueAtTime(vol * 1.3, t); g.gain.setTargetAtTime(0.0001, t + dur + 0.25, 0.12);
+    const body = ac.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 220; body.gain.value = 4;
+    sb.connect(body); body.connect(g); g.connect(dst); sb.start(t); sb.stop(t + Math.min(3.1, dur + 1));
+    return;
+  }
+  if (kind === 'fmbell') {                       // TRAP BELL / PLUGG BELL: a two-operator FM bell
+    const car = ac.createOscillator(); car.frequency.value = f;
+    const mod = ac.createOscillator(); mod.frequency.value = f * 3.5;
+    const mg = ac.createGain(); mg.gain.setValueAtTime(f * 1.1, t); mg.gain.setTargetAtTime(f * 0.05, t, 0.08);
+    mod.connect(mg); mg.connect(car.frequency);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(5000, f * 5);
+    const g = decayEnv(t, vol * 0.6, dur + 0.5, 0.7, 0.4); car.connect(lp); lp.connect(g); g.connect(dst);
+    const body = ac.createGain(); body.gain.value = 0.35; body.connect(g); osc('sine', f / 2, t, end, body);
+    car.start(t); mod.start(t); car.stop(end); mod.stop(end);
+    return;
+  }
+  if (kind === 'flute') {                        // LOFI FLUTE / PAN FLUTE: breath, then a soft vibrato
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.62, t + 0.06);
+    g.gain.setValueAtTime(vol * 0.55, t + Math.max(0.07, dur - 0.05)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.12);
+    g.connect(dst);
+    const o = osc('sine', f, t, t + dur + 0.2, g); const o2g = ac.createGain(); o2g.gain.value = 0.18; o2g.connect(g); const o2 = osc('triangle', f * 2, t, t + dur + 0.2, o2g);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 5.2; const lg = ac.createGain();
+    lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(14, t + Math.min(0.5, dur)); lfo.connect(lg); lg.connect(o.detune); lg.connect(o2.detune);
+    lfo.start(t); lfo.stop(t + dur + 0.2);
+    noise(t, Math.min(0.12, dur), vol * 0.08, 'bandpass', f * 2, 2);
+    return;
+  }
+  if (kind === 'choir' || kind === 'cello') {    // CHOIR AAH (an "ah" through formants) / CELLO BOW, DARK STR (bowed)
+    const atk = kind === 'choir' ? 0.22 : 0.14;
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * (kind === 'choir' ? 0.7 : 0.5), t + atk);
+    g.gain.setValueAtTime(vol * 0.45, t + Math.max(atk + 0.01, dur - 0.05)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.35);
+    g.connect(dst);
+    const src = ac.createGain();
+    if (kind === 'choir') [[700, 1], [1220, 0.5], [2600, 0.22]].forEach(([fr, a]) => {
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = 5;
+      const ag = ac.createGain(); ag.gain.value = a * 2.2; src.connect(bp); bp.connect(ag); ag.connect(g);
+    }); else { const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(2600, f * 6); src.connect(lp); lp.connect(g); }
+    const lfo = ac.createOscillator(); lfo.frequency.value = kind === 'choir' ? 4.6 : 5.5; const lg = ac.createGain(); lg.gain.value = kind === 'choir' ? 9 : 12;
+    lfo.connect(lg); lfo.start(t); lfo.stop(t + dur + 0.5);
+    [-8, 0, 8].forEach(dt => lg.connect(osc('sawtooth', f, t, t + dur + 0.5, src, dt).detune));
+    return;
+  }
+  if (kind === 'piano') {                     // GRAND PNO: hammer attack, bright then darker, long decay
+    const g = decayEnv(t, vol, dur, 0.9, 0.12);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(Math.min(9000, f * 9), t); lp.frequency.setTargetAtTime(Math.min(4000, f * 4), t, 0.4);
+    lp.connect(g); g.connect(dst);
+    osc('triangle', f, t, end, lp); 
+    const h = ac.createGain(); h.gain.value = 0.35; h.connect(lp); osc('sine', f * 2, t, end, h, 3);
+    const h3 = ac.createGain(); h3.gain.value = 0.12; h3.connect(lp); osc('sine', f * 3, t, end, h3, -4);
+  } else if (kind === 'epiano') {             // RHODES: round tone with a short metallic tine
+    const g = decayEnv(t, vol * 0.9, dur, 1.6, 0.15); g.connect(dst);
+    osc('sine', f, t, end, g);
+    const tine = ac.createGain(); tine.gain.setValueAtTime(vol * 0.5, t); tine.gain.setTargetAtTime(0.0001, t, 0.08);
+    tine.connect(dst); osc('sine', f * 4, t, t + 0.6, tine);
+  } else if (kind === 'bell') {               // TRAP BELL, PLUGG BELL, VIBES: inharmonic bell
+    const g = decayEnv(t, vol * 0.6, dur + 0.6, 0.5, 0.4); g.connect(dst);
+    osc('sine', f, t, end, g);
+    const p = ac.createGain(); p.gain.setValueAtTime(vol * 0.25, t); p.gain.setTargetAtTime(0.0001, t, 0.15);
+    p.connect(dst); osc('sine', f * 2.76, t, t + 0.8, p);
+  } else if (kind === 'pluck') {              // NYLON PICK: plucked string
+    const g = decayEnv(t, vol * 0.5, dur + 0.3, 0.45, 0.2);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(5000, t); lp.frequency.exponentialRampToValueAtTime(700, t + 0.25);
+    lp.connect(g); g.connect(dst);
+    osc('sawtooth', f, t, end, lp); osc('triangle', f, t, end, lp, 5);
+  } else if (kind === 'saw' || kind === 'square' || kind === 'strings') {
+    // SUPERSAW (three detuned saws), GAME LEAD (chip square), DARK STR (slow strings)
+    const atk = kind === 'strings' ? 0.12 : 0.006;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.55, t + atk);
+    g.gain.setValueAtTime(vol * 0.55, t + Math.max(atk + 0.01, dur - 0.04));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + (kind === 'strings' ? 0.4 : 0.08));
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = kind === 'square' ? 5000 : 2600;
+    lp.connect(g); g.connect(dst);
+    const dets = kind === 'square' ? [0] : [-14, 0, 14];
+    dets.forEach(d => osc(kind === 'square' ? 'square' : 'sawtooth', f, t, t + dur + 0.5, lp, d));
+  } else if (kind === 'pad') {
+    padNote(t, midi, dur * 0.97, vol * 0.18);
+  } else {
+    synthNote(t, midi, Math.max(0.06, dur * 0.9), vol, false, null, 0);
+  }
+}
+function padNote(t, midi, dur, vol) {
+  const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1700; f.Q.value = 0.5;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.06);
+  g.gain.setValueAtTime(vol, t + Math.max(0.07, dur - 0.1));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+  f.connect(g); g.connect(dst);
+  [-6, 6].forEach(dt => {
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(midi); o.detune.value = dt;
+    o.connect(f); o.start(t); o.stop(t + dur + 0.3);
+  });
+}
+let lit = [];
+function lightOn(fig, e, until) {
+  const els = [];
+  (e.k || []).forEach(k => fig.querySelectorAll(`svg.kbd .key[data-k="${k}"]`).forEach(x => els.push(x)));
+  if (e.i != null && e.i >= 0) fig.querySelectorAll(`[data-i="${e.i}"]`).forEach(x => els.push(x));
+  els.forEach(x => x.classList.add('lit'));
+  lit.push({ els, until });
+}
+function lightTick(now) {
+  lit = lit.filter(l => { if (l.until <= now) { l.els.forEach(x => x.classList.remove('lit')); return false; } return true; });
+}
+function lightClear() { lit.forEach(l => l.els.forEach(x => x.classList.remove('lit'))); lit = []; }
+function playEv(p, e, t, sb) {
+  dst = BUS[e.v] || BUS.lead;
+  if (e.v === 'drums') { const d = KIT[e.lane] || DRUM[e.lane]; d && d(t, e.vol); return; }
+  const ms = Array.isArray(e.m) ? e.m : [e.m];
+  const short = e.a && e.a.includes("'"), acc = e.a && e.a.includes('!');
+  const dur = e.d * sb * (short ? 0.45 : 1), padk = (p.inst && p.inst.pad) || 'pad';
+  const strum = ms.length > 1 && (padk === 'guitar' || padk === 'steel' || padk === 'eguitar') ? 0.024 : 0;   // a chord strummed low to high
+  const hz = Math.sin((e.t + 1) * 12.9898 + (ms[0] || 0) * 78.233) * 43758.5453, rnd = hz - Math.floor(hz);   // a fixed "random"
+  if (e.v === 'lead' || e.v === 'pad') { t += (rnd - 0.5) * 0.014; }
+  const human = (e.v === 'lead' ? 0.86 + rnd * 0.24 : 1) * (acc ? 1.35 : 1);
+  ms.forEach((m, i) => {
+    if (e.v === 'pad') voice(padk, t + i * strum, m, dur * 0.97 - i * strum, 0.3);
+    else if (e.v === 'lead' && p.inst && p.inst.lead && e.s == null) voice(p.inst.lead, t, m, dur, 0.42 * human);
+    else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4 * ((p.fx && p.fx.dist) || 1), e.s, t + dur);
+    else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
+    else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
+  });
+}
+function evList(p) {
+  return p.ev.map(e => ({ t: e[0], d: e[1], m: e[2], v: e[3], k: e[4], i: e[5], s: e[6], a: e[7] || '' }))
+    .concat(p.dr.map(d => ({ t: d[0], lane: d[1], vol: d[2], v: 'drums' })))
+    .sort((a, b) => a.t - b.t);
+}
+function startEv(btn, p, fig) {
+  const sb = 60 / p.bpm;
+  const evs = evList(p);
+  const me = { p, fig, btn, queue: [], base: ac.currentTime + 0.08, idx: 0 };
+  cur = me;
+  applyFx(p, me.base);
+  if (p.fx && p.fx.vinyl) vinyl(me.base, p.beats * sb);
+  const muted = () => new Set([...fig.querySelectorAll('input[data-voice]')].filter(x => !x.checked).map(x => x.dataset.voice));
+  me.timer = setInterval(() => {
+    if (!evs.length) return;
+    const off = muted();
+    while (me.base + evs[me.idx].t * sb < ac.currentTime + 0.15) {
+      const e = evs[me.idx], t = me.base + e.t * sb;
+      if (!off.has(e.v)) {
+        playEv(p, e, t, sb);
+        if (e.v !== 'drums') me.queue.push({ t, e, until: t + e.d * sb * 0.92 });
+      }
+      me.idx++;
+      if (me.idx >= evs.length) { me.idx = 0; me.base += p.beats * sb; if (p.fx && p.fx.vinyl) vinyl(me.base, p.beats * sb); }
+    }
+  }, 25);
+  const draw = () => {
+    if (cur !== me) return;
+    const now = ac.currentTime;
+    while (me.queue.length && me.queue[0].t <= now) { const q = me.queue.shift(); lightOn(fig, q.e, q.until); }
+    lightTick(now);
+    me.raf = requestAnimationFrame(draw);
+  };
+  me.raf = requestAnimationFrame(draw);
+}
+const KEYMIDI = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
+document.addEventListener('pointerdown', e => {
+  const key = e.target.closest('svg.kbd.playable .key');
+  if (!key) return;
+  audio(); ac.resume();
+  const t = ac.currentTime + 0.01;
+  dst = BUS.lead;
+  voice('piano', t, KEYMIDI(key.dataset.k), 0.6, 0.42);
+  key.classList.add('lit');
+  setTimeout(() => key.classList.remove('lit'), 320);
+});
+
+/* ---------- lessons done ---------- */
+(function () {
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem('sloop-done') || '{}'); } catch (e) {}
+  const mark = () => chaps.forEach(c => c.classList.toggle('done', !!done[c.dataset.sec.replace(/^ch-/, '')]));
+  document.querySelectorAll('input[data-lesson]').forEach(cb => {
+    cb.checked = !!done[cb.dataset.lesson];
+    cb.addEventListener('change', () => {
+      done[cb.dataset.lesson] = cb.checked;
+      try { localStorage.setItem('sloop-done', JSON.stringify(done)); } catch (e) {}
+      mark();
+    });
+  });
+  mark();
+})();
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+window.addEventListener('hashchange', stop);
+</script>
