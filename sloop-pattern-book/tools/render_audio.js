@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const [, , book = 'sloop-book.html', outDir = 'out/wav'] = process.argv;
+const [, , book = 'sloop-book.html', outDir = 'out/wav', only] = process.argv;   // only: a list of pids, "3,7,12" 
 const RATE = 44100;
 
 function wav(samples) {
@@ -24,7 +24,8 @@ function wav(samples) {
   const page = await browser.newPage();
   await page.goto('file://' + path.resolve(book));
   const n = await page.evaluate(() => PATTERNS.length);
-  for (let pid = 0; pid < n; pid++) {
+  const pids = only ? only.split(',').map(Number) : [...Array(n).keys()];
+  for (const pid of pids) {
     const res = await page.evaluate(async ([pid, rate]) => {
       const p = PATTERNS[pid];
       const sb = 60 / p.bpm;
@@ -37,26 +38,23 @@ function wav(samples) {
       const fill = p.type === 'drum' && p.cond && p.cond.some(c => c === 'F' || c === 'N');
       if (fill) loops = Math.max(loops, 4);
       const t0 = 0.05, total = t0 + loops * loopSec + 2;
-      const saved = { ac, out, noiseBuf, ohat, shaper };
+      const saved = { ac, out, noiseBuf, ohat, shaper, dst, BUS, KIT, crackBuf, KS };
       ac = new OfflineAudioContext(1, Math.ceil(total * rate), rate);
-      ohat = null; shaper = null;
-      const comp = ac.createDynamicsCompressor();
-      comp.threshold.value = -12; comp.ratio.value = 12; comp.knee.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
-      out = ac.createGain(); out.gain.value = 0.6;
-      out.connect(comp); comp.connect(ac.destination);
-      noiseBuf = ac.createBuffer(1, rate * 1.5, rate);
-      const d = noiseBuf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      buildBus();                                     // the same mix as the page: kits, reverb, delay
+      applyFx(p, t0);
       if (p.type === 'ev') {
         const evs = evList(p);
-        for (let l = 0; l < loops; l++) evs.forEach(e => playEv(p, e, t0 + l * loopSec + e.t * sb, sb));
+        for (let l = 0; l < loops; l++) {
+          if (p.fx && p.fx.vinyl) vinyl(t0 + l * loopSec, loopSec);
+          evs.forEach(e => playEv(p, e, t0 + l * loopSec + e.t * sb, sb));
+        }
       } else {
         let t = t0;
         for (let l = 0; l < loops; l++)
           for (let i = 0; i < p.len; i++) { schedule(p, i, t, fill && l === loops - 1); t += stepDur(p, i); }
       }
       const buf = await ac.startRendering();
-      ({ ac, out, noiseBuf, ohat, shaper } = saved);
+      ({ ac, out, noiseBuf, ohat, shaper, dst, BUS, KIT, crackBuf, KS } = saved);
       const ch = buf.getChannelData(0);
       let end = ch.length;
       while (end > rate && Math.abs(ch[end - 1]) < 1e-4) end--;      // trim the silent tail

@@ -404,18 +404,62 @@ document.getElementById('scrim').addEventListener('click', () => document.body.c
 
 /* ---------- audio ---------- */
 let ac = null, out = null, noiseBuf = null, ohat = null;
-function audio() {
-  if (ac) return ac;
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone: play with the silent switch on
-  ac = new (window.AudioContext || window.webkitAudioContext)();
+let dst = null, BUS = null, KIT = null, crackBuf = null;      // dst: where the voice being played goes
+function buildBus() {
+  /* master: limiter; four buses (drums, bass, lead, pad) with sends to a reverb and a tempo delay */
   const comp = ac.createDynamicsCompressor();
   comp.threshold.value = -12; comp.ratio.value = 12; comp.knee.value = 6; comp.attack.value = 0.003; comp.release.value = 0.25;
   out = ac.createGain(); out.gain.value = 0.6;
   out.connect(comp); comp.connect(ac.destination);
-  noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate);
+  const sr = ac.sampleRate;
+  noiseBuf = ac.createBuffer(1, sr * 1.5, sr);
   const d = noiseBuf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const ir = ac.createBuffer(1, Math.floor(sr * 2.4), sr), r = ir.getChannelData(0);
+  let lp = 0;                                                     // a dark, smooth room: filtered decaying noise
+  for (let i = 0; i < r.length; i++) { lp += 0.35 * ((Math.random() * 2 - 1) - lp); r[i] = lp * Math.pow(1 - i / r.length, 2.6); }
+  const rev = ac.createConvolver(); rev.buffer = ir;
+  const revIn = ac.createGain(); revIn.gain.value = 0.9; revIn.connect(rev); rev.connect(out);
+  const dly = ac.createDelay(2), fb = ac.createGain(), dlp = ac.createBiquadFilter(), dlyIn = ac.createGain();
+  dlp.type = 'lowpass'; dlp.frequency.value = 3200; fb.gain.value = 0.32;
+  dlyIn.connect(dly); dly.connect(dlp); dlp.connect(fb); fb.connect(dly); dlp.connect(out); dlp.connect(revIn);
+  BUS = { rev: revIn, dly, dlyIn };
+  for (const k of ['drums', 'bass', 'lead', 'pad']) {
+    const g = ac.createGain(); g.connect(out);
+    const rs = ac.createGain(); rs.gain.value = 0; g.connect(rs); rs.connect(revIn);
+    const ds = ac.createGain(); ds.gain.value = 0; g.connect(ds); ds.connect(dlyIn);
+    BUS[k] = g; BUS[k + 'Rev'] = rs; BUS[k + 'Dly'] = ds;
+  }
+  const dlpf = ac.createBiquadFilter(); dlpf.type = 'lowpass'; dlpf.frequency.value = 20000;   // a dusty kit darkens here
+  BUS.drums.disconnect(); BUS.drums.connect(dlpf); dlpf.connect(out); dlpf.connect(BUS.drumsRev); dlpf.connect(BUS.drumsDly);
+  BUS.drumsTone = dlpf;
+  dst = BUS.lead; KIT = DRUM; ohat = null; shaper = null; KS = {};
+  crackBuf = ac.createBuffer(1, sr * 2, sr);                     // vinyl: sparse clicks over a soft hiss
+  const c = crackBuf.getChannelData(0);
+  for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * 0.012 + (Math.random() < 0.0009 ? (Math.random() * 2 - 1) * 0.7 : 0);
+}
+function audio() {
+  if (ac) return ac;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone: play with the silent switch on
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  buildBus();
   return ac;
+}
+/* an example's sound: its kit, how much reverb and echo; set from the time it starts */
+function applyFx(p, t) {
+  const fx = p.fx || {}, set = (n, v) => { BUS[n].gain.cancelScheduledValues(t); BUS[n].gain.setValueAtTime(v, t); };
+  const rev = fx.rev != null ? fx.rev : 0.12;
+  set('leadRev', rev); set('padRev', rev * 1.3); set('drumsRev', fx.drev != null ? fx.drev : 0.05); set('bassRev', 0);
+  set('bass', fx.dist > 1 ? Math.pow(fx.dist, -0.6) : 1);          // a driven 808 is louder: bring it back
+  set('leadDly', fx.dly || 0); set('padDly', 0); set('drumsDly', fx.ddly || 0); set('bassDly', 0);
+  BUS.dly.delayTime.setValueAtTime(Math.min(1.9, 60 / p.bpm * 0.75), t);       // a dotted eighth
+  KIT = KITS[fx.kit] || DRUM;
+  BUS.drumsTone.frequency.setValueAtTime(fx.kit === 'boom' ? 7000 : 20000, t);
+}
+function vinyl(t, dur) {
+  const s = ac.createBufferSource(); s.buffer = crackBuf; s.loop = true;
+  const g = ac.createGain(); g.gain.value = 0.5; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
+  s.connect(hp); hp.connect(g); g.connect(out); s.start(t); s.stop(t + dur);
 }
 function env(g, t, vol, dur, atk = 0.002) {
   g.gain.setValueAtTime(0.0001, t);
@@ -426,7 +470,7 @@ function noise(t, dur, vol, type, freq, q = 0.8) {
   const s = ac.createBufferSource(); s.buffer = noiseBuf;
   const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
   const g = ac.createGain(); env(g, t, vol, dur);
-  s.connect(f); f.connect(g); g.connect(out);
+  s.connect(f); f.connect(g); g.connect(dst);
   s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   return g;
 }
@@ -435,7 +479,7 @@ function tone(t, f0, f1, dur, vol, type = 'sine', bend = 0.06) {
   o.frequency.setValueAtTime(f0, t);
   o.frequency.exponentialRampToValueAtTime(Math.max(f1, 20), t + bend);
   const g = ac.createGain(); env(g, t, vol, dur);
-  o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  o.connect(g); g.connect(dst); o.start(t); o.stop(t + dur + 0.05);
   return g;
 }
 function choke(t) { if (ohat) { try { ohat.gain.cancelScheduledValues(t); ohat.gain.setTargetAtTime(0.0001, t, 0.01); } catch (e) {} ohat = null; } }
@@ -455,8 +499,57 @@ const DRUM = {
   13: (t, v) => { noise(t, 0.55, v * 0.18, 'bandpass', 7800, 1.5); tone(t, 5200, 5100, 0.4, v * 0.05, 'square', 0.1); },
   14: (t, v) => noise(t, 0.07, v * 0.28, 'highpass', 9000),
   15: (t, v) => tone(t, 360, 290, 0.2, v * 0.7, 'sine', 0.03),
-  16: (t, v) => { [545, 815].forEach(f => { const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = f; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2; const g = ac.createGain(); env(g, t, v * 0.22, 0.26); o.connect(bp); bp.connect(g); g.connect(out); o.start(t); o.stop(t + 0.3); }); },
+  16: (t, v) => { [545, 815].forEach(f => { const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = f; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2; const g = ac.createGain(); env(g, t, v * 0.22, 0.26); o.connect(bp); bp.connect(g); g.connect(dst); o.start(t); o.stop(t + 0.3); }); },
 };
+
+/* genre kits: the lanes of the FM-1 kit, built like the classic machines (808 / trap, dusty boom-bap) */
+function metal(t, dur, vol, hp = 7000) {          // the 808's cymbal: six square waves through a band-pass
+  const g = ac.createGain(); env(g, t, vol, dur, 0.001);
+  const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 10000; bp.Q.value = 0.9;
+  const h = ac.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp;
+  bp.connect(h); h.connect(g); g.connect(dst);
+  [205.3, 304.4, 369.6, 522.7, 540, 800].forEach(f => osc('square', f * 1.68, t, t + dur + 0.05, bp));
+  return g;
+}
+function kick808(t, v, f0, f1, dur, click) {
+  const o = ac.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + 0.05);
+  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.002);
+  g.gain.setTargetAtTime(0.0001, t + 0.03, dur / 4);
+  o.connect(g); g.connect(dst); o.start(t); o.stop(t + dur + 0.1);
+  if (click) noise(t, 0.012, v * click, 'highpass', 2500);
+}
+function clap(t, v, f = 1400, tail = 0.22) {
+  [0, 0.009, 0.019, 0.028].forEach(o => noise(t + o, 0.012, v * 0.75, 'bandpass', f, 1.4));
+  noise(t + 0.03, tail, v * 0.6, 'bandpass', f * 0.9, 1.1);
+}
+const KITS = {
+  trap: Object.assign({}, DRUM, {
+    1: (t, v) => kick808(t, v * 1.05, 170, 52, 0.32, 0.25),
+    2: (t, v) => kick808(t, v, 120, 40, 1.4, 0.15),                       // KICK 2: the long 808
+    3: (t, v) => { tone(t, 230, 180, 0.08, v * 0.35, 'triangle', 0.02); noise(t, 0.16, v * 0.75, 'highpass', 1900); clap(t, v * 0.45); },
+    4: (t, v) => clap(t, v * 1.05),
+    5: (t, v) => { choke(t); metal(t, 0.035 + v * 0.03, v * 0.5); },
+    6: (t, v) => { choke(t); ohat = metal(t, 0.42, v * 0.42, 6500); },
+    7: (t, v) => { choke(t); metal(t, 0.05, v * 0.22); },
+    8: (t, v) => { tone(t, 1900, 1700, 0.02, v * 0.3, 'square', 0.005); noise(t, 0.02, v * 0.3, 'bandpass', 4000, 2); },
+    9: (t, v) => { noise(t, 0.12, v * 0.7, 'highpass', 2600); tone(t, 330, 260, 0.05, v * 0.3, 'triangle', 0.02); },
+    12: (t, v) => { metal(t, 1.2, v * 0.22, 5000); noise(t, 1.0, v * 0.25, 'highpass', 6000, 0.5); },
+  }),
+  drill: null,                                   // filled below: trap with a tight, high "drill" snare
+  boom: Object.assign({}, DRUM, {
+    1: (t, v) => { kick808(t, v * 1.1, 130, 50, 0.3, 0.4); tone(t, 90, 60, 0.12, v * 0.35, 'triangle', 0.04); },
+    3: (t, v) => { tone(t, 200, 165, 0.12, v * 0.55, 'triangle', 0.03); noise(t, 0.2, v * 0.8, 'bandpass', 2300, 0.6); noise(t, 0.05, v * 0.4, 'highpass', 5000); },
+    4: (t, v) => clap(t, v * 0.9, 1200, 0.18),
+    5: (t, v) => { choke(t); noise(t, 0.05, v * 0.36, 'bandpass', 8000, 0.9); },
+    6: (t, v) => { choke(t); ohat = noise(t, 0.3, v * 0.3, 'bandpass', 7500, 0.8); },
+    8: (t, v) => { tone(t, 1500, 1300, 0.025, v * 0.3, 'square', 0.006); noise(t, 0.03, v * 0.35, 'bandpass', 2500, 2); },
+  }),
+};
+KITS.drill = Object.assign({}, KITS.trap, {
+  3: (t, v) => { tone(t, 380, 300, 0.05, v * 0.4, 'triangle', 0.015); noise(t, 0.11, v * 0.8, 'bandpass', 3400, 0.8); clap(t, v * 0.3, 1800, 0.12); },
+  9: (t, v) => { noise(t, 0.07, v * 0.7, 'bandpass', 4200, 1.2); tone(t, 420, 360, 0.03, v * 0.3, 'triangle', 0.01); },
+});
 const LV = { g: 0.22, x: 0.5, X: 0.8, O: 1.0, '2': 0.8, '3': 0.8, '4': 0.8 };
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 function synthNote(t, midi, dur, vol, bass, slideTo, slideAt) {
@@ -468,7 +561,7 @@ function synthNote(t, midi, dur, vol, bass, slideTo, slideAt) {
   g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
   g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.01, dur - 0.04));
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.06);
-  f.connect(g); g.connect(out);
+  f.connect(g); g.connect(dst);
   const types = bass ? ['sawtooth', 'sine'] : ['triangle', 'square'];
   const mix = bass ? [0.5, 0.8] : [0.8, 0.12];
   types.forEach((ty, i) => {
@@ -501,14 +594,17 @@ function schedule(p, i, t, fill) {
     if (c === 'F' && !fill) return;
     if (c === 'N' && fill) return;
     const d = stepDur(p, i);
+    dst = BUS.drums;
     for (const ln of Object.keys(p.lanes).map(Number).sort((a, b) => a - b)) {
       const ch = p.lanes[ln][i];
       if (!ch || ch === '.' || ch === '-') continue;
       const v = LV[ch] || 0.8;
       const n = /[234]/.test(ch) ? +ch : 1;
-      for (let k = 0; k < n; k++) DRUM[ln] && DRUM[ln](t + k * d / n, v);
+      const dr = KIT[ln] || DRUM[ln];
+      for (let k = 0; k < n; k++) dr && dr(t + k * d / n, v);
     }
   } else {
+    dst = p.bass ? BUS.bass : BUS.lead;
     for (const vc of p.voices) {
       const m = vc.notes[i];
       if (typeof m !== 'number') continue;
@@ -554,6 +650,7 @@ function start(btn) {
   }
   const fillBox = fig.querySelector('input[data-fill]');
   cur = { p, fig, btn, step: 0, next: ac.currentTime + 0.08, queue: [] };
+  applyFx(p, cur.next);
   btn.classList.add('on'); btn.querySelector('.ico').textContent = '■'; btn.querySelector('.txt').textContent = 'Стоп';
   const me = cur;
   me.timer = setInterval(() => {
@@ -586,7 +683,7 @@ function sub808(t, midi, dur, vol, slideTo, slideAt) {
     shaper = ac.createWaveShaper();
     const c = new Float32Array(1024);
     for (let i = 0; i < c.length; i++) { const x = i / 511.5 - 1; c[i] = Math.tanh(2.2 * x); }
-    shaper.curve = c; shaper.connect(out);
+    shaper.curve = c; shaper.connect(BUS.bass);
   }
   const g = ac.createGain();
   g.gain.setValueAtTime(0.0001, t);
@@ -618,31 +715,112 @@ function decayEnv(t, vol, dur, tail, release) {
   g.gain.setTargetAtTime(0.0001, t + dur, release);              // ...or stops when the key comes up
   return g;
 }
+
+let KS = {};
+function ksBuffer(midi, bright, decay) {           // a plucked string (Karplus-Strong), made once a note
+  const key = midi + ':' + bright;
+  if (KS[key]) return KS[key];
+  const sr = ac.sampleRate, n = Math.max(2, Math.round(sr / mtof(midi) - 0.5)), len = Math.floor(sr * 3.2);
+  const b = ac.createBuffer(1, len, sr), y = b.getChannelData(0);
+  let lp = 0;
+  for (let i = 0; i < n; i++) { lp += bright * ((Math.random() * 2 - 1) - lp); y[i] = lp; }
+  for (let i = n + 1; i < len; i++) y[i] = decay * 0.5 * (y[i - n] + y[i - n - 1]);
+  let pk = 0; for (let i = 0; i < len; i++) pk = Math.max(pk, Math.abs(y[i]));
+  for (let i = 0; i < len; i++) y[i] /= pk || 1;
+  return (KS[key] = b);
+}
 function voice(kind, t, midi, dur, vol) {
   const f = mtof(midi), end = t + dur + 1.2;
+  if (kind === 'cowbell') {                      // the drift-phonk melody: a pitched 808 cowbell
+    const g = ac.createGain(); env(g, t, vol * 1.15, Math.min(0.35, dur + 0.15), 0.001);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 1.9; bp.Q.value = 1.6;
+    bp.connect(g); g.connect(dst);
+    osc('square', f, t, t + 0.5, bp); osc('square', f * 1.48, t, t + 0.5, bp);
+    return;
+  }
+  if (kind === 'supersaw') {                     // SUPERSAW: seven detuned saws, wide and loud
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.42, t + 0.008);
+    g.gain.setValueAtTime(vol * 0.38, t + Math.max(0.02, dur - 0.04)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.12);
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 160;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500;
+    hp.connect(lp); lp.connect(g); g.connect(dst);
+    [-32, -19, -8, 0, 8, 19, 32].forEach(d => osc('sawtooth', f, t, t + dur + 0.2, hp, d));
+    const o8 = ac.createGain(); o8.gain.value = 0.35; o8.connect(hp); osc('sawtooth', f * 2, t, t + dur + 0.2, o8, 5);
+    return;
+  }
+  if (kind === 'vox') {                          // a chopped vocal "ah": the choir with a fast attack
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.8, t + 0.008);
+    g.gain.setValueAtTime(vol * 0.7, t + Math.max(0.02, dur - 0.03)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+    g.connect(dst); const src = ac.createGain();
+    [[750, 1], [1200, 0.6], [2700, 0.3]].forEach(([fr, a]) => { const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = 4; const ag = ac.createGain(); ag.gain.value = a * 2.4; src.connect(bp); bp.connect(ag); ag.connect(g); });
+    [-6, 6].forEach(dt => osc('sawtooth', f, t, t + dur + 0.1, src, dt));
+    return;
+  }
+  if (kind === 'guitar' || kind === 'steel') {   // NYLON GTR / STEEL GTR: a modelled string
+    const sb = ac.createBufferSource(); sb.buffer = ksBuffer(midi, kind === 'steel' ? 0.75 : 0.42, kind === 'steel' ? 0.9985 : 0.9965);
+    const g = ac.createGain(); g.gain.setValueAtTime(vol * 1.3, t); g.gain.setTargetAtTime(0.0001, t + dur + 0.25, 0.12);
+    const body = ac.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 220; body.gain.value = 4;
+    sb.connect(body); body.connect(g); g.connect(dst); sb.start(t); sb.stop(t + Math.min(3.1, dur + 1));
+    return;
+  }
+  if (kind === 'fmbell') {                       // TRAP BELL / PLUGG BELL: a two-operator FM bell
+    const car = ac.createOscillator(); car.frequency.value = f;
+    const mod = ac.createOscillator(); mod.frequency.value = f * 3.5;
+    const mg = ac.createGain(); mg.gain.setValueAtTime(f * 2.2, t); mg.gain.setTargetAtTime(f * 0.15, t, 0.12);
+    mod.connect(mg); mg.connect(car.frequency);
+    const g = decayEnv(t, vol * 0.62, dur + 0.5, 0.55, 0.35); car.connect(g); g.connect(dst);
+    car.start(t); mod.start(t); car.stop(end); mod.stop(end);
+    return;
+  }
+  if (kind === 'flute') {                        // LOFI FLUTE / PAN FLUTE: breath, then a soft vibrato
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.62, t + 0.06);
+    g.gain.setValueAtTime(vol * 0.55, t + Math.max(0.07, dur - 0.05)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.12);
+    g.connect(dst);
+    const o = osc('sine', f, t, t + dur + 0.2, g); const o2g = ac.createGain(); o2g.gain.value = 0.18; o2g.connect(g); const o2 = osc('triangle', f * 2, t, t + dur + 0.2, o2g);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 5.2; const lg = ac.createGain();
+    lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(14, t + Math.min(0.5, dur)); lfo.connect(lg); lg.connect(o.detune); lg.connect(o2.detune);
+    lfo.start(t); lfo.stop(t + dur + 0.2);
+    noise(t, Math.min(0.12, dur), vol * 0.08, 'bandpass', f * 2, 2);
+    return;
+  }
+  if (kind === 'choir' || kind === 'cello') {    // CHOIR AAH (an "ah" through formants) / CELLO BOW, DARK STR (bowed)
+    const atk = kind === 'choir' ? 0.22 : 0.14;
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * (kind === 'choir' ? 0.7 : 0.5), t + atk);
+    g.gain.setValueAtTime(vol * 0.45, t + Math.max(atk + 0.01, dur - 0.05)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.35);
+    g.connect(dst);
+    const src = ac.createGain();
+    if (kind === 'choir') [[700, 1], [1220, 0.5], [2600, 0.22]].forEach(([fr, a]) => {
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = 5;
+      const ag = ac.createGain(); ag.gain.value = a * 2.2; src.connect(bp); bp.connect(ag); ag.connect(g);
+    }); else { const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.min(2600, f * 6); src.connect(lp); lp.connect(g); }
+    const lfo = ac.createOscillator(); lfo.frequency.value = kind === 'choir' ? 4.6 : 5.5; const lg = ac.createGain(); lg.gain.value = kind === 'choir' ? 9 : 12;
+    lfo.connect(lg); lfo.start(t); lfo.stop(t + dur + 0.5);
+    [-8, 0, 8].forEach(dt => lg.connect(osc('sawtooth', f, t, t + dur + 0.5, src, dt).detune));
+    return;
+  }
   if (kind === 'piano') {                     // GRAND PNO: hammer attack, bright then darker, long decay
     const g = decayEnv(t, vol, dur, 0.9, 0.12);
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
     lp.frequency.setValueAtTime(Math.min(9000, f * 9), t); lp.frequency.setTargetAtTime(Math.min(4000, f * 4), t, 0.4);
-    lp.connect(g); g.connect(out);
+    lp.connect(g); g.connect(dst);
     osc('triangle', f, t, end, lp); 
     const h = ac.createGain(); h.gain.value = 0.35; h.connect(lp); osc('sine', f * 2, t, end, h, 3);
     const h3 = ac.createGain(); h3.gain.value = 0.12; h3.connect(lp); osc('sine', f * 3, t, end, h3, -4);
   } else if (kind === 'epiano') {             // RHODES: round tone with a short metallic tine
-    const g = decayEnv(t, vol * 0.9, dur, 1.6, 0.15); g.connect(out);
+    const g = decayEnv(t, vol * 0.9, dur, 1.6, 0.15); g.connect(dst);
     osc('sine', f, t, end, g);
     const tine = ac.createGain(); tine.gain.setValueAtTime(vol * 0.5, t); tine.gain.setTargetAtTime(0.0001, t, 0.08);
-    tine.connect(out); osc('sine', f * 4, t, t + 0.6, tine);
+    tine.connect(dst); osc('sine', f * 4, t, t + 0.6, tine);
   } else if (kind === 'bell') {               // TRAP BELL, PLUGG BELL, VIBES: inharmonic bell
-    const g = decayEnv(t, vol * 0.6, dur + 0.6, 0.5, 0.4); g.connect(out);
+    const g = decayEnv(t, vol * 0.6, dur + 0.6, 0.5, 0.4); g.connect(dst);
     osc('sine', f, t, end, g);
     const p = ac.createGain(); p.gain.setValueAtTime(vol * 0.25, t); p.gain.setTargetAtTime(0.0001, t, 0.15);
-    p.connect(out); osc('sine', f * 2.76, t, t + 0.8, p);
+    p.connect(dst); osc('sine', f * 2.76, t, t + 0.8, p);
   } else if (kind === 'pluck') {              // NYLON PICK: plucked string
     const g = decayEnv(t, vol * 0.5, dur + 0.3, 0.45, 0.2);
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass';
     lp.frequency.setValueAtTime(5000, t); lp.frequency.exponentialRampToValueAtTime(700, t + 0.25);
-    lp.connect(g); g.connect(out);
+    lp.connect(g); g.connect(dst);
     osc('sawtooth', f, t, end, lp); osc('triangle', f, t, end, lp, 5);
   } else if (kind === 'saw' || kind === 'square' || kind === 'strings') {
     // SUPERSAW (three detuned saws), GAME LEAD (chip square), DARK STR (slow strings)
@@ -652,7 +830,7 @@ function voice(kind, t, midi, dur, vol) {
     g.gain.setValueAtTime(vol * 0.55, t + Math.max(atk + 0.01, dur - 0.04));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur + (kind === 'strings' ? 0.4 : 0.08));
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = kind === 'square' ? 5000 : 2600;
-    lp.connect(g); g.connect(out);
+    lp.connect(g); g.connect(dst);
     const dets = kind === 'square' ? [0] : [-14, 0, 14];
     dets.forEach(d => osc(kind === 'square' ? 'square' : 'sawtooth', f, t, t + dur + 0.5, lp, d));
   } else if (kind === 'pad') {
@@ -668,7 +846,7 @@ function padNote(t, midi, dur, vol) {
   g.gain.exponentialRampToValueAtTime(vol, t + 0.06);
   g.gain.setValueAtTime(vol, t + Math.max(0.07, dur - 0.1));
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
-  f.connect(g); g.connect(out);
+  f.connect(g); g.connect(dst);
   [-6, 6].forEach(dt => {
     const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(midi); o.detune.value = dt;
     o.connect(f); o.start(t); o.stop(t + dur + 0.3);
@@ -687,13 +865,15 @@ function lightTick(now) {
 }
 function lightClear() { lit.forEach(l => l.els.forEach(x => x.classList.remove('lit'))); lit = []; }
 function playEv(p, e, t, sb) {
-  if (e.v === 'drums') { DRUM[e.lane] && DRUM[e.lane](t, e.vol); return; }
+  dst = BUS[e.v] || BUS.lead;
+  if (e.v === 'drums') { const d = KIT[e.lane] || DRUM[e.lane]; d && d(t, e.vol); return; }
   const ms = Array.isArray(e.m) ? e.m : [e.m];
-  const dur = e.d * sb;
-  ms.forEach(m => {
-    if (e.v === 'pad') voice((p.inst && p.inst.pad) || 'pad', t, m, dur * 0.97, 0.3);
+  const dur = e.d * sb, padk = (p.inst && p.inst.pad) || 'pad';
+  const strum = ms.length > 1 && (padk === 'guitar' || padk === 'steel') ? 0.024 : 0;   // a chord strummed low to high
+  ms.forEach((m, i) => {
+    if (e.v === 'pad') voice(padk, t + i * strum, m, dur * 0.97 - i * strum, 0.3);
     else if (e.v === 'lead' && p.inst && p.inst.lead && e.s == null) voice(p.inst.lead, t, m, dur, 0.42);
-    else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4, e.s, t + dur);
+    else if (e.v === 'bass' && p.b808) sub808(t, m, e.s != null ? dur + 0.1 : dur * 0.95, 0.4 * ((p.fx && p.fx.dist) || 1), e.s, t + dur);
     else if (e.s != null) synthNote(t, m, dur + 0.08, e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', e.s, t + dur);
     else synthNote(t, m, Math.max(0.06, dur * 0.9), e.v === 'bass' ? 0.36 : 0.42, e.v === 'bass', null, 0);
   });
@@ -708,6 +888,8 @@ function startEv(btn, p, fig) {
   const evs = evList(p);
   const me = { p, fig, btn, queue: [], base: ac.currentTime + 0.08, idx: 0 };
   cur = me;
+  applyFx(p, me.base);
+  if (p.fx && p.fx.vinyl) vinyl(me.base, p.beats * sb);
   const muted = () => new Set([...fig.querySelectorAll('input[data-voice]')].filter(x => !x.checked).map(x => x.dataset.voice));
   me.timer = setInterval(() => {
     if (!evs.length) return;
@@ -719,7 +901,7 @@ function startEv(btn, p, fig) {
         if (e.v !== 'drums') me.queue.push({ t, e, until: t + e.d * sb * 0.92 });
       }
       me.idx++;
-      if (me.idx >= evs.length) { me.idx = 0; me.base += p.beats * sb; }
+      if (me.idx >= evs.length) { me.idx = 0; me.base += p.beats * sb; if (p.fx && p.fx.vinyl) vinyl(me.base, p.beats * sb); }
     }
   }, 25);
   const draw = () => {
@@ -737,6 +919,7 @@ document.addEventListener('pointerdown', e => {
   if (!key) return;
   audio(); ac.resume();
   const t = ac.currentTime + 0.01;
+  dst = BUS.lead;
   voice('piano', t, KEYMIDI(key.dataset.k), 0.6, 0.42);
   key.classList.add('lit');
   setTimeout(() => key.classList.remove('lit'), 320);

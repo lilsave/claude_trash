@@ -29,12 +29,16 @@
 ## Послушай целиком
 
 ```loop
-lead_sound=saw
+lead_sound=supersaw
 pad_sound=pad
 title=Рейдж: 2 такта
 bpm=155
 bars=2
 scale=MIN
+kit=trap
+dist=2.5
+reverb=0.3
+delay=0.12
 bass_sound=808
 drums=1:X......X..X.....;3:........O.......;5:X.X.X.X.X.X.X.X.X.X.X.X.X.X.2.4.;6:...............X
 bass=C4*7 C4*3 C4*6 | A3*7 A3*3 B3*6
@@ -47,7 +51,8 @@ note=Аккордов нет: синт-лид сам и мелодия, и га�
 Мелодия возвращается на одну и ту же ноту (G/соль, клавиша 9) между высокими нотами — так рифф цепляет.
 
 ```song
-sound=saw
+sound=supersaw
+reverb=0.3
 title=SUPERSAW: рифф с опорной нотой
 bpm=155
 scale=MIN
@@ -75,6 +80,7 @@ caption=Коротко FX → страница FX: KNOB 2 — хорус, KNOB 3
 
 ```song
 title=808 DIRTY в ритме бочки
+dist=2.5
 bpm=155
 scale=MIN
 voice=bass

@@ -32,35 +32,42 @@
 ## Послушай целиком
 
 ```loop
-lead_sound=saw
-pad_sound=pad
+lead_sound=vox
+pad_sound=choir
 title=Джерси-клаб: 2 такта
 bpm=140
 bars=2
 scale=MIN
+kit=trap
+reverb=0.15
 bass_sound=808
-drums=1:X...X...X.X..X..;4:....X.......X...;5:..X...X...X...X.
+drums=1:X...X...X.X...X.X...X...X.X.X.X.;4:....X.......X.......X.......X.X.;5:..X...X...X...X.
 chords=C4 A3
-bass=C4*4 C4*4 C4*2 C4*3 C4*3 | A3*4 A3*4 A3*2 A3*3 A3*3
+bass=C4*4 C4*4 C4*2 C4*4 C4*2 | A3*4 A3*4 A3*2 A3*2 A3*2 A3*2
 melody=r*2 C5*1 r*1 C5*2 G4*2 r*2 E4*1 r*1 G4*2 E4*2
 note=Мелодия — это «нарезка голоса»: короткие ноты хора с паузами.
 ```
 
 ## Фишка 1: пачки бочек
 
-**BPM 140 · кит TRAP**
+**BPM 140 · кит TRAP · LEN 32**
 
 ```
-            1e+a|2e+a|3e+a|4e+a
+такт 1      1e+a|2e+a|3e+a|4e+a
  5 HAT      ..X.|..X.|..X.|..X.
  4 CLAP     ....|X...|....|X...
- 1 KICK     X...|X...|X.X.|.X..
+ 1 KICK     X...|X...|X.X.|..X.
+
+такт 2      1e+a|2e+a|3e+a|4e+a
+ 5 HAT      ..X.|..X.|..X.|..X.
+ 4 CLAP     ....|X...|....|X.X.
+ 1 KICK     X...|X...|X.X.|X.X.
 ```
 
 ```keys
 mode=steps
-steps=1 5 9 11 14
-caption=Бочка: 1, 5, 9 — ровно, потом 11 и 14 — «очередь»
+steps=1 5 9 11 15
+caption=Бочка: 1, 5, 9 — ровно, потом 11 и 15 — «очередь». Во втором такте очередь длиннее: 11, 13, 15
 ```
 
 ## Фишка 2: нарезка голоса
@@ -68,7 +75,7 @@ caption=Бочка: 1, 5, 9 — ровно, потом 11 и 14 — «очере
 На треке 3 — **CHOIR AAH**, но ноты очень короткие: коротко SEQ → страница **PATTERN** → **KNOB 4 (GATE)** влево, почти до конца.
 
 ```song
-sound=saw
+sound=vox
 title=CHOIR AAH: «вокальные чопы»
 bpm=140
 scale=MIN

@@ -31,19 +31,22 @@
 ## Послушай целиком
 
 ```loop
-lead_sound=bell
+lead_sound=fmbell
 pad_sound=pad
 title=Плаггнб: 4 такта
 bpm=150
 bars=4
 scale=MAJ
 kind=7TH
+kit=trap
+reverb=0.4
+delay=0.2
 bass_sound=808
 drums=1:X........X......;4:........X.......;5:X...X...X..2X...;8:..............x.
 chords=F4 E4 D4 C4
-bass=F4*9 F4*7 | E4*9 E4*7 | D4*9 D4*7 | C4*9 C4*7
-melody=E5/ D5/ C5/ G4/ E5/ D5/ C5/ A4/ | D5/ C5/ G4/ E4/ G4/ A4/ C5
-note=Аккорды идут вниз по ступеням: IVmaj7 – iii7 – ii7 – Imaj7. Бас спускается вместе с ними.
+bass=F4*9 F4*7 | E4*9 E4*5 G4*2~ | D4*9 D4*7 | C4*9 C4*5 E4*2~
+melody=E5/ D5/ C5/ G4/ E5/ D5/ C5/ A4/ | D5/ C5/ G4/ E4/ G4/ A4/ C5 | C5/ A4/ F4/ D4/ C5/ A4/ F4/ A4/ | G4/ A4/ C5/ D5/ E5-
+note=Аккорды идут вниз по ступеням: IVmaj7 – iii7 – ii7 – Imaj7. Бас спускается вместе с ними и в конце 2-го и 4-го тактов «скользит» к следующей ноте. Много реверба и эха — это половина звука плагга.
 ```
 
 ## Фишка 1: септаккорды одним пальцем
@@ -78,7 +81,7 @@ bars=F4 E4 D4 C4
 ## Фишка 3: колокольчик восьмыми
 
 ```song
-sound=bell
+sound=fmbell
 title=PLUGG BELL
 bpm=150
 notes=E5/ D5/ C5/ G4/ E5/ D5/ C5/ A4/ | D5/ C5/ G4/ E4/ G4/ A4/ C5

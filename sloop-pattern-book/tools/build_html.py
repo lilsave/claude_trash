@@ -344,7 +344,7 @@ class Book:
         bpm = int(o.get('bpm', 90))
         ev, beats = self.song_events(notes_ex, scale, voice)
         beats = -(-beats // 4) * 4
-        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [],
+        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [], 'fx': self.fx_of(o),
                         'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)}, o.get('title'))
         meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
@@ -427,7 +427,7 @@ class Book:
             if ',' in hl[k]:
                 hl[k] = hl[k].split(',')[0] + '…'
         pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': len(bars) * 4, 'ev': ev, 'dr': [],
-                        'inst': self.inst(o, fn)}, o.get('title'))
+                        'inst': self.inst(o, fn), 'fx': self.fx_of(o)}, o.get('title'))
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         meta = '%d BPM · CHORD = %s%s · по такту на аккорд' % (bpm, kind, '' if scale == 'MAJ' else ' · ' + scale)
         kb = F.keyboard(hl, sorted(ghost), 'notes', (), None)
@@ -451,6 +451,30 @@ class Book:
                 x[5] = x[5] if r == 0 else -1
                 out.append(x)
         return out
+
+    # FM-1 kit -> the player's kit: the 808 family plays as trap, the dusty ones as boom-bap
+    KIT_OF = {'TRAP': 'trap', '808': 'trap', 'DRILL': 'drill', 'PHONK': 'trap', 'HYPER': 'trap', 'GLITCH': 'trap',
+              'DUBSTEP': 'trap', 'ELECTRO': 'trap', 'BOOMBAP': 'boom', 'LO-FI': 'boom', 'VINTAGE': 'boom', 'DUST': 'boom',
+              'JAZZ': 'boom', 'ACOUSTIC': 'boom', 'DEEP': 'boom'}
+
+    def fx_of(self, o):
+        """A loop's sound: kit=, reverb= / delay= (lead), drumverb= / drumdelay=, vinyl=1."""
+        fx = {}
+        if o.get('kit'):
+            fx['kit'] = o['kit']
+        for k, n in (('reverb', 'rev'), ('delay', 'dly'), ('drumverb', 'drev'), ('drumdelay', 'ddly')):
+            if o.get(k):
+                fx[n] = float(o[k])
+        if o.get('vinyl'):
+            fx['vinyl'] = 1
+        if o.get('dist'):
+            fx['dist'] = float(o['dist'])          # how hard the 808 hits its distortion (808 DIRTY: 2)
+        return fx
+
+    def kit_fx(self, ctx):
+        m = re.search(r'кит\s+\**([A-Z0-9][A-Z0-9.\-]*)', ctx)
+        k = self.KIT_OF.get(m.group(1)) if m else None
+        return {'kit': k} if k else {}
 
     def loop(self, o, fn):
         bpm = int(o.get('bpm', 90))
@@ -517,7 +541,7 @@ class Book:
             e = self.fill_loop(e, tot, beats, 'melody', fn)
             ev += e
             tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))
-        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr,
+        pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': dr, 'fx': self.fx_of(o),
                         'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)}, o.get('title'))
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         rows = ''.join('<div class="trk t%d"><label class="tmute"><input type="checkbox" checked data-voice="%s"> '
@@ -620,7 +644,7 @@ class Book:
                 if cond:
                     cond += ['.'] * (length - len(cond))
                 pid = self.add({'type': 'drum', 'bpm': st['bpm'], 'swing': st['swing'], 'spb': spb,
-                                'len': length, 'lanes': lanes, 'cond': cond or None})
+                                'len': length, 'lanes': lanes, 'cond': cond or None, 'fx': self.kit_fx(ctx)})
             html_out.append(self.render_drum(grp, pid, st, bool(any(r[0].startswith('Усл') for s in grp for r in s['rows']))))
         return '\n'.join(html_out)
 

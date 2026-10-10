@@ -32,11 +32,15 @@
 
 ```loop
 lead_sound=square
-pad_sound=saw
+pad_sound=supersaw
 title=Хайперпоп: 4 такта
 bpm=160
 bars=4
 scale=MAJ
+kit=trap
+dist=2.5
+reverb=0.2
+delay=0.1
 bass_sound=808
 drums=1:X.....X.X.....X.;4:....X.......X...;5:X.X.X.X.X.X.2.4.;12:X...............................................................
 chords=F4 G4 E4 A4
