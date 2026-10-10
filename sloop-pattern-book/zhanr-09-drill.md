@@ -32,10 +32,11 @@
 
 ```loop
 lead_sound=cello
+octave=-1
 pad_sound=piano
-title=Дрилл: 2 такта
+title=Дрилл: 4 такта
 bpm=142
-bars=2
+bars=4
 scale=HARM
 kit=drill
 reverb=0.3
@@ -43,8 +44,8 @@ bass_sound=808
 drums=1:X.........X.......X..........X..;3:........O..........x....O.....g.;5:X..X..X..X..X.X.X..X..X..X..X2X.
 chords=C4 G3
 bass=C4*10~ C5*6 | r*2 C4*11 D4*2~ C4*1
-melody=C5 B4 C5 G4 | A4 G4 F4 E4
-note=Аккорд второго такта — мажорный V (в гармоническом миноре): отсюда «злое» напряжение.
+melody=C5*8 B4*4 C5*4 | G4*8 A4*4 G4*4 | F4*8 E4*4 F4*4 | E4*8 D4*4 B3*4
+note=Виолончель на октаву ниже (OCT−) ведёт медленную линию вниз: C – B – C, G – A♭ – G… Аккорд 3–4 тактов — мажорный V (в гармоническом миноре): отсюда «злое» напряжение.
 ```
 
 ## Фишка 1: хэты «по три»
@@ -92,11 +93,12 @@ caption=EDIT → страница VOICE: KNOB 1 — LEG, KNOB 2 — GLD (дли�
 
 ```song
 sound=cello
+octave=-1
 reverb=0.3
 title=CELLO BOW: «тёмная классика»
 bpm=142
 scale=HARM
-notes=C5 B4 C5 G4 | A4 G4 F4 E4
+notes=C5*8 B4*4 C5*4 | G4*8 A4*4 G4*4 | F4*8 E4*4 F4*4 | E4*8 D4*4 B3*4
 note=В ладу HARM клавиша 11 даёт «восточную» повышенную ступень — это и звучит как дрилл.
 ```
 
@@ -104,7 +106,7 @@ note=В ладу HARM клавиша 11 даёт «восточную» повы
 
 1. Темп **142**, трек 4 → **DRILL**, LEN 32, бит из сетки.
 2. Трек 1 → **808 SLIDE**, KEYS = WHITE, SCALE = **HARM**, VOICE = LEG + GLD.
-3. Трек 3 → **CELLO BOW** (в 2.4 — DARK STR): ноты по четвертям (DIV 1/4, LEN 8). VOICE → **LEG**, чтобы ноты связывались.
+3. Трек 3 → **CELLO BOW** (в 2.4 — DARK STR), **OCT−** один раз: длинные ноты (DIV 1/16, LEN 64). VOICE → **LEG**, чтобы ноты связывались.
 4. Трек 2 → **GRAND PNO**, CHORD = TRIAD, DIV 1BAR: клавиша 5, клавиша 2.
 
 ## Вариации

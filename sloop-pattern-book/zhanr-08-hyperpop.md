@@ -31,7 +31,7 @@
 ## Послушай целиком
 
 ```loop
-lead_sound=square
+lead_sound=supersaw
 pad_sound=supersaw
 title=Хайперпоп: 4 такта
 bpm=160

@@ -343,10 +343,12 @@ class Book:
         voice = o.get('voice', 'lead')
         bpm = int(o.get('bpm', 90))
         ev, beats = self.song_events(notes_ex, scale, voice)
+        self.octave(ev, o)
         beats = -(-beats // 4) * 4
         pid = self.add({'type': 'ev', 'bpm': bpm, 'beats': beats, 'ev': ev, 'dr': [], 'fx': self.fx_of(o),
                         'b808': o.get('bass_sound') == '808', 'inst': self.inst(o, fn)}, o.get('title'))
-        meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale)
+        meta = '%d BPM' % bpm + ('' if scale == 'MAJ' else ' · лад %s (KEYS = WHITE)' % scale) + \
+            (' · OCT %+d' % int(o['octave']) if o.get('octave') else '')
         title = '<div class="ctitle">%s</div>' % self.inline(o['title'], fn) if o.get('title') else ''
         used = {k: '' for k, _ in notes if k}
         body = []
@@ -469,7 +471,19 @@ class Book:
             fx['vinyl'] = 1
         if o.get('dist'):
             fx['dist'] = float(o['dist'])          # how hard the 808 hits its distortion (808 DIRTY: 2)
+        if o.get('tone'):
+            fx['tone'] = float(o['tone'])          # a low-pass on the melody, Hz: darker
         return fx
+
+    @staticmethod
+    def octave(ev, o):
+        """octave=-1: the melody an octave lower, as OCT− on the FM-1 (the keys in the book stay the same)."""
+        k = 12 * int(o.get('octave', 0))
+        for e in ev:
+            e[2] += k
+            if e[6] is not None:
+                e[6] += k
+        return ev
 
     def kit_fx(self, ctx):
         m = re.search(r'кит\s+\**([A-Z0-9][A-Z0-9.\-]*)', ctx)
@@ -538,6 +552,7 @@ class Book:
             notes_ex = F.parse_notes_ex(o['melody'])
             notes = [(k, b) for k, b, _ in notes_ex]
             e, tot = self.song_events(notes_ex, scale, 'lead', swing=swing)
+            self.octave(e, o)
             e = self.fill_loop(e, tot, beats, 'melody', fn)
             ev += e
             tracks.append(('lead', 3, 'Мелодия', F.staff(notes) if scale == 'MAJ' else F.chips(notes, scale)))

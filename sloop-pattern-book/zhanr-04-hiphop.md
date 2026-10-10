@@ -42,6 +42,7 @@ kind=7TH
 kit=boom
 reverb=0.15
 vinyl=1
+tone=3500
 drums=1:X..X....X.X.....;3:....O..g.g..O..g;5:X.x.X.x.X.x.X...;6:..............X.
 chords=C4 F4
 bass=C4*3 C4*5 C4*2 G3*6 | F3*3 F3*5 F3*2 A3*6
