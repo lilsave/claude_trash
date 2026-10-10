@@ -12,7 +12,7 @@
 
 ### M01 · Лоу-фай флейта
 
-**LOFI FLUTE или FLUTE DUST · MIN · BPM 80 · LEN 32 · SWG 58 %**
+**LOFI FLUTE или FLUTE DUST · MIN · BPM 80 · LEN 32 · SWG 32**
 
 ```
        |1  e  +  a  |2  e  +  a  |3  e  +  a  |4  e  +  a  |
@@ -126,7 +126,7 @@ DIV **1/8**: клетка — восьмая, группа — такт попо
 
 ### M11 · Вибрафон, лоу-фай-джаз (секвенция)
 
-**VIBES · DOR · BPM 85 · LEN 32 · SWG 60 %**
+**VIBES · DOR · BPM 85 · LEN 32 · SWG 40**
 
 ```
        |1  e  +  a  |2  e  +  a  |3  e  +  a  |4  e  +  a  |

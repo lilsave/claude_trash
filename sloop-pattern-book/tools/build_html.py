@@ -55,6 +55,7 @@ ORDER = [
     ('07-retsepty.md', 'Справочник', '7. Рецепты треков'),
     ('08-protiv-odinakovosti.md', 'Справочник', '8. Против одинаковости'),
     ('09-katalog.md', 'Справочник', '9. Каталог звуков и китов'),
+    ('10-novoe-v-2-5.md', 'Справочник', '10. Новое в 2.5'),
 ]
 
 SCALES = {
@@ -458,7 +459,7 @@ class Book:
         beats = nbars * 4
         ev, dr = [], []
         tracks = []
-        swing = int(o.get('swing', 50))
+        swing = 50 + int(o.get('swing', 0)) / 4        # the book writes 2.5's swing (0–100); the player wants MPC %
         if o.get('drums'):
             lanes = []
             for part in o['drums'].split(';'):
@@ -548,12 +549,12 @@ class Book:
     @staticmethod
     def settings(ctx):
         bpm = re.search(r'BPM (\d+)', ctx)
-        swg = re.search(r'SWG (\d+) %', ctx)
+        swg = re.search(r'SWG (\d+)', ctx)             # 2.5: 0 (straight) … 100 (MPC 75 %)
         div = re.search(r'DIV (1/16|1/8|1/4|8T|16T)', ctx)
         sc = re.search(r'\b(MAJ|MIN|DOR|PHRY|LYD|MIX|LOC|HARM|MEL|MPEN|PEN|BLUES)\b', ctx)
         return {
             'bpm': int(bpm.group(1)) if bpm else 100,
-            'swing': int(swg.group(1)) if swg else 50,
+            'swing': 50 + int(swg.group(1)) / 4 if swg else 50,
             'div': div.group(1) if div else '1/16',
             'scale': sc.group(1) if sc else 'MAJ',
         }
@@ -628,7 +629,7 @@ class Book:
             return ''
         meta = '%d BPM' % st['bpm']
         if st['swing'] != 50:
-            meta += ' · SWG %d %%' % st['swing']
+            meta += ' · SWG %d' % round((st['swing'] - 50) * 4)
         if kind == 'mel':
             meta += ' · %s' % st['scale']
         f = '<label class="fill"><input type="checkbox" data-fill="%d"> брейк (GLO + 10)</label>' % pid if fill else ''

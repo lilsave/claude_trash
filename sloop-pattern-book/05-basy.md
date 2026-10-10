@@ -14,7 +14,7 @@
 
 ### B01 · Бум-бэп: контрабас
 
-**UP BASS или DEEP BASS · MIN · BPM 90 · LEN 32 · SWG 58 % · к D01**
+**UP BASS или DEEP BASS · MIN · BPM 90 · LEN 32 · SWG 32 · к D01**
 
 ```
        |1  e  +  a  |2  e  +  a  |3  e  +  a  |4  e  +  a  |
@@ -124,7 +124,7 @@
 
 ### B10 · Регги, уан-дроп
 
-**SUB BASS или DEEP BASS · MIN · BPM 75 · LEN 32 · SWG 62 % · к D38**
+**SUB BASS или DEEP BASS · MIN · BPM 75 · LEN 32 · SWG 48 · к D38**
 
 ```
        |1  e  +  a  |2  e  +  a  |3  e  +  a  |4  e  +  a  |
@@ -253,7 +253,7 @@ DIV **1/4**: одна клетка — четверть. Длинные ноты
 
 ### B21 · Джи-фанк
 
-**FAT BASS · DOR · BPM 92 · SWG 58 % · VCE LEG, GLD ≈ 30 %**
+**FAT BASS · DOR · BPM 92 · SWG 32 · VCE LEG, GLD ≈ 30 %**
 
 ```
        |1  e  +  a  |2  e  +  a  |3  e  +  a  |4  e  +  a  |
